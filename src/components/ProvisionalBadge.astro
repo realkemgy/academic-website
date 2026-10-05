@@ -1,0 +1,18 @@
+---
+/** Shown on teaching subjects and research themes not yet confirmed. */
+interface Props {
+  text?: string;
+}
+const { text = 'Provisional' } = Astro.props;
+---
+
+<span class="badge ph-badge" title="Topics shown are illustrative and awaiting confirmation">{text}</span>
+
+<style>
+  .ph-badge {
+    border-style: dashed;
+    border-color: var(--ph-border);
+    color: var(--ph-fg);
+    background: var(--ph-bg);
+  }
+</style>

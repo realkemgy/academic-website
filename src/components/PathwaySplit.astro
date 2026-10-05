@@ -1,0 +1,115 @@
+---
+/**
+ * The two intellectual pillars of the site, side by side.
+ */
+import { getTeaching, getResearch } from '../utils/content';
+
+const teaching = await getTeaching();
+const research = await getResearch();
+
+const pillars = [
+  {
+    id: 'pillar-teaching',
+    title: 'Teaching',
+    href: '/teaching/',
+    copy: 'Courses, educational resources and scientific instruction.',
+    count: `${teaching.length} subject area${teaching.length === 1 ? '' : 's'}`,
+    items: teaching.map((t) => ({ title: t.data.title, href: `/teaching/${t.id}/` })),
+  },
+  {
+    id: 'pillar-research',
+    title: 'Research',
+    href: '/research/',
+    copy: 'Research themes, publications, scientific software and current projects.',
+    count: `${research.length} research theme${research.length === 1 ? '' : 's'}`,
+    items: research.map((r) => ({ title: r.data.title, href: `/research/${r.id}/` })),
+  },
+];
+---
+
+<section class="border-b border-border" aria-label="Teaching and research">
+  <div class="wrap grid md:grid-cols-2">
+    {
+      pillars.map((p, i) => (
+        <div class:list={['pathway py-10 md:py-14', i === 0 ? 'md:pr-12 lg:pr-16' : 'border-t border-border md:border-t-0 md:border-l md:pl-12 lg:pl-16']}>
+          <p class="label tabular">{p.count}</p>
+          <h2 id={p.id} class="mt-3 text-step-4">
+            <a href={p.href} class="pathway-title">
+              {p.title}
+              <span class="arrow" aria-hidden="true">
+                &rarr;
+              </span>
+            </a>
+          </h2>
+          <p class="mt-4 max-w-[30rem] text-step-1 text-fg">{p.copy}</p>
+          <ul class="mt-8 border-t border-border" aria-labelledby={p.id}>
+            {p.items.map((item) => (
+              <li class="border-b border-border">
+                <a href={item.href} class="pathway-item">
+                  <span>{item.title}</span>
+                  <span class="arrow text-fg-muted" aria-hidden="true">
+                    &rarr;
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .pathway-title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35em;
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .pathway-title .arrow {
+    font-size: 0.6em;
+    color: var(--accent);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .pathway-title:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.12em;
+  }
+
+  .pathway-title:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  .pathway-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3rem;
+    padding: 0.5rem 0.25rem;
+    color: var(--fg-strong);
+    text-decoration: none;
+    transition:
+      background-color var(--dur) var(--ease),
+      padding var(--dur) var(--ease);
+  }
+
+  .pathway-item:hover {
+    background: var(--surface-2);
+    padding-left: 0.75rem;
+  }
+
+  .pathway-item .arrow {
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .pathway-item:hover .arrow {
+    transform: translateX(3px);
+    color: var(--fg-strong);
+  }
+</style>

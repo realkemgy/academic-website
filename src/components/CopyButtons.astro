@@ -1,0 +1,29 @@
+---
+/**
+ * Progressive enhancement for "Copy" buttons inside citation panels. Buttons
+ * are hidden until this script runs, so nothing appears that cannot work.
+ */
+---
+
+<script>
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+    const source = btn.previousElementSibling as HTMLElement | null;
+    if (!source || !navigator.clipboard) continue;
+    btn.hidden = false;
+    const label = btn.textContent;
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(source.innerText.trim());
+        btn.textContent = 'Copied';
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(source);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        btn.textContent = 'Selected: press Ctrl+C or Cmd+C';
+      }
+      setTimeout(() => (btn.textContent = label), 2500);
+    });
+  }
+</script>

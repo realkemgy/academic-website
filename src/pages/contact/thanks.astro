@@ -1,0 +1,16 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  noindex
+  title="Message sent"
+  eyebrow="Contact"
+  description="Your message has been sent."
+  lede="Thank you. Your message has been sent and will be answered as soon as possible."
+  breadcrumbs={[{ name: 'Contact', href: '/contact/' }, { name: 'Message sent', href: '/contact/thanks/' }]}
+>
+  <div class="wrap section">
+    <a class="arrow-link" href="/">Return to the homepage <span class="arrow" aria-hidden="true">&rarr;</span></a>
+  </div>
+</PageLayout>

@@ -1,0 +1,16 @@
+// Cloudflare Workers with static assets: an alternative to Cloudflare Pages.
+// Copy this file to the repository root as wrangler.jsonc ONLY if you choose
+// Workers. public/_headers is honoured by Workers static assets as well.
+{
+  "name": "academic-website",
+  "main": "deploy/cloudflare-workers/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist/",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    // Only /api/* reaches the Worker; every other request is a static file.
+    "run_worker_first": ["/api/*"]
+  }
+}

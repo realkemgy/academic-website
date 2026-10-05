@@ -1,0 +1,83 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Markdown from '../../components/Markdown.astro';
+import ResearchCard from '../../components/ResearchCard.astro';
+import ResearchNetwork from '../../components/ResearchNetwork.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import { getSnippet, getResearch, getPublications, getProjects } from '../../utils/content';
+
+const statement = await getSnippet('research-statement');
+const themes = await getResearch();
+const pubs = await getPublications();
+const projects = await getProjects();
+---
+
+<PageLayout
+  title="Research"
+  eyebrow="Research"
+  description="Research statement, research themes, publications and scientific software."
+  breadcrumbs={[{ name: 'Research', href: '/research/' }]}
+>
+  <Markdown entry={statement} slot="intro" class="prose lede mt-6 max-w-[44rem]" />
+
+  <section class="section" aria-labelledby="themes-heading">
+    <div class="wrap">
+      <SectionHeading id="themes-heading" label="Themes" title="Research themes" />
+      <div class="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+        {themes.map((entry) => <ResearchCard entry={entry} topicLimit={8} />)}
+      </div>
+      <EditorNote class="mt-8">
+        Themes are Markdown files in <code>src/content/research/</code>. They are marked provisional until you set{' '}
+        <code>confirmed: true</code>. Rename, remove or add themes freely; copy <code>_TEMPLATE.md</code> to start a new
+        one.
+      </EditorNote>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="map-heading">
+    <div class="wrap">
+      <SectionHeading id="map-heading" label="Overview" title="How the themes connect" />
+      <ResearchNetwork />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="outputs-heading">
+    <div class="wrap">
+      <SectionHeading id="outputs-heading" label="Outputs" title="Evidence of research" />
+      <div class="grid gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-2">
+        <a href="/publications/" class="output-tile">
+          <span class="label">Publications</span>
+          {pubs.length > 0 && <span class="mt-3 font-serif text-step-4 text-fg-strong tabular">{pubs.length}</span>}
+          <span class="mt-3 text-fg">{pubs.length ? 'Articles, papers, chapters and preprints' : 'Publication records are being added'}</span>
+          <span class="arrow-link mt-5">Browse publications <span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
+        <a href="/projects/" class="output-tile">
+          <span class="label">Software &amp; projects</span>
+          {projects.length > 0 && <span class="mt-3 font-serif text-step-4 text-fg-strong tabular">{projects.length}</span>}
+          <span class="mt-3 text-fg">{projects.length ? 'Research codes, tools and workflows' : 'Project records are being added'}</span>
+          <span class="arrow-link mt-5">Browse software and projects <span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<style>
+  .output-tile {
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem;
+    background: var(--surface);
+    text-decoration: none;
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .output-tile:hover {
+    background: var(--surface-2);
+  }
+
+  .output-tile:hover .arrow {
+    transform: translateX(3px);
+  }
+</style>

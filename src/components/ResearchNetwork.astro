@@ -1,0 +1,295 @@
+---
+/**
+ * "Research at a Glance": a figure showing how teaching subjects and research
+ * themes relate. Static SVG rendered at build time; a small script adds
+ * highlighting on hover and keyboard focus. Two layouts (wide and tall) keep
+ * labels legible from phones to large screens. A text list gives the same
+ * information without the graphic.
+ */
+import { NODES, EDGES, KIND_LABEL, type MapNode } from '../data/research-map';
+
+interface Props {
+  figureNumber?: number;
+}
+const { figureNumber = 1 } = Astro.props;
+
+const byId = new Map(NODES.map((n) => [n.id, n]));
+const neighbours = (id: string) =>
+  EDGES.filter(([a, b]) => a === id || b === id).map(([a, b]) => byId.get(a === id ? b : a)!);
+
+const layouts = [
+  { key: 'wide' as const, viewBox: '0 0 1000 470', fontSize: 15, cls: 'map-wide' },
+  { key: 'tall' as const, viewBox: '0 0 400 760', fontSize: 15, cls: 'map-tall' },
+];
+
+const pos = (n: MapNode, key: 'wide' | 'tall') => n[key];
+---
+
+<figure class="research-map" aria-labelledby="map-caption">
+  <div class="map-frame">
+    {
+      layouts.map((layout) => (
+        <svg
+          class:list={['map', layout.cls]}
+          viewBox={layout.viewBox}
+          role="group"
+          aria-labelledby="map-caption"
+          data-research-map
+        >
+          <g class="edges">
+            {EDGES.map(([a, b]) => {
+              const p = pos(byId.get(a)!, layout.key);
+              const q = pos(byId.get(b)!, layout.key);
+              return <line class="edge" data-a={a} data-b={b} x1={p.x} y1={p.y} x2={q.x} y2={q.y} />;
+            })}
+          </g>
+          <g class="nodes">
+            {NODES.map((n) => {
+              const { x, y } = pos(n, layout.key);
+              const label = `${n.label}, ${KIND_LABEL[n.kind].toLowerCase()}`;
+              const body = (
+                <>
+                  {n.kind === 'research' && (
+                    <>
+                      <circle class="halo" cx={x} cy={y} r="14" />
+                      <circle class="ring" cx={x} cy={y} r="9" />
+                      <circle class="core-research" cx={x} cy={y} r="3.5" />
+                    </>
+                  )}
+                  {n.kind === 'teaching' && (
+                    <>
+                      <circle class="halo" cx={x} cy={y} r="14" />
+                      <circle class="core-teaching" cx={x} cy={y} r="7.5" />
+                    </>
+                  )}
+                  {n.kind === 'concept' && (
+                    <>
+                      <circle class="halo" cx={x} cy={y} r="12" />
+                      <circle class="core-concept" cx={x} cy={y} r="6.5" />
+                    </>
+                  )}
+                  <text class="node-label" x={x} y={y + 30} font-size={layout.fontSize} text-anchor="middle">
+                    {n.lines.map((line, i) => (
+                      <tspan x={x} dy={i === 0 ? 0 : layout.fontSize * 1.2}>
+                        {line}
+                      </tspan>
+                    ))}
+                  </text>
+                </>
+              );
+              return n.href ? (
+                <a class="node" href={n.href} data-id={n.id} data-kind={n.kind} aria-label={label}>
+                  {body}
+                </a>
+              ) : (
+                <g class="node" data-id={n.id} data-kind={n.kind} aria-label={label} role="img">
+                  {body}
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      ))
+    }
+  </div>
+
+  <div class="mt-5 grid gap-5 md:grid-cols-12">
+    <figcaption id="map-caption" class="text-step--1 text-fg-muted md:col-span-7">
+      <span class="label label-accent mr-1">Figure {figureNumber}.</span>
+      How the teaching subjects and research themes on this site connect. Hover over or focus a field to highlight its
+      neighbours; select it to open its page.
+    </figcaption>
+    <ul class="legend md:col-span-5 md:justify-self-end" aria-label="Legend">
+      <li><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="core-teaching" cx="10" cy="10" r="6" /></svg>Teaching subject</li>
+      <li>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle class="ring" cx="10" cy="10" r="7" /><circle class="core-research" cx="10" cy="10" r="2.8" /></svg>Research theme
+      </li>
+      <li><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="core-concept" cx="10" cy="10" r="5.5" /></svg>Bridging concept</li>
+    </ul>
+  </div>
+
+  <details class="mt-5 border-t border-border pt-4">
+    <summary class="cursor-pointer font-semibold text-link">Read the connections as a list</summary>
+    <ul class="mt-4 grid gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        NODES.map((n) => (
+          <li class="text-step--1">
+            <span class="font-semibold text-fg-strong">
+              {n.href ? <a href={n.href}>{n.label}</a> : n.label}
+            </span>
+            <span class="text-fg-muted"> ({KIND_LABEL[n.kind].toLowerCase()})</span>
+            <br />
+            <span class="text-fg">Connects to: {neighbours(n.id).map((m) => m.label).join(', ')}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </details>
+</figure>
+
+<script>
+  // Highlight a node and its direct connections. Purely presentational:
+  // the figure is complete and usable without this script.
+  for (const svg of document.querySelectorAll<SVGSVGElement>('[data-research-map]')) {
+    const edges = [...svg.querySelectorAll<SVGLineElement>('.edge')];
+    const nodes = [...svg.querySelectorAll<SVGElement>('.node')];
+
+    const activate = (id: string | null) => {
+      if (!id) {
+        svg.removeAttribute('data-active');
+        for (const el of [...edges, ...nodes]) el.classList.remove('is-linked');
+        return;
+      }
+      svg.setAttribute('data-active', id);
+      const linked = new Set([id]);
+      for (const e of edges) {
+        const on = e.dataset.a === id || e.dataset.b === id;
+        e.classList.toggle('is-linked', on);
+        if (on) linked.add(e.dataset.a!).add(e.dataset.b!);
+      }
+      for (const n of nodes) n.classList.toggle('is-linked', linked.has(n.dataset.id!));
+    };
+
+    for (const n of nodes) {
+      n.addEventListener('pointerenter', () => activate(n.dataset.id!));
+      n.addEventListener('focus', () => activate(n.dataset.id!));
+      n.addEventListener('blur', () => activate(null));
+    }
+    svg.addEventListener('pointerleave', () => activate(null));
+  }
+</script>
+
+<style>
+  .map-frame {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 1.2px) 0 0 / 22px 22px,
+      var(--surface);
+    padding: 1rem 0;
+  }
+
+  .map {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .map-tall {
+    max-width: 26rem;
+    margin-inline: auto;
+  }
+
+  .map-wide {
+    display: none;
+  }
+
+  @media (min-width: 48rem) {
+    .map-wide {
+      display: block;
+    }
+
+    .map-tall {
+      display: none;
+    }
+  }
+
+  .edge {
+    stroke: var(--edge);
+    stroke-width: 1.4;
+    transition:
+      stroke var(--dur) var(--ease),
+      opacity var(--dur) var(--ease);
+  }
+
+  .halo {
+    fill: var(--surface);
+  }
+
+  .core-teaching {
+    fill: var(--node-teaching);
+  }
+
+  .ring {
+    fill: var(--surface);
+    stroke: var(--node-research);
+    stroke-width: 2;
+  }
+
+  .core-research {
+    fill: var(--node-research);
+  }
+
+  .core-concept {
+    fill: var(--node-concept);
+    stroke: var(--control-border);
+    stroke-width: 1.5;
+    stroke-dasharray: 2.5 2;
+  }
+
+  .node {
+    cursor: default;
+    transition: opacity var(--dur) var(--ease);
+  }
+
+  a.node {
+    cursor: pointer;
+  }
+
+  .node-label {
+    fill: var(--fg-strong);
+    font-family: var(--font-text);
+    font-weight: 600;
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+
+  a.node:hover .node-label,
+  a.node:focus-visible .node-label {
+    text-decoration: underline;
+  }
+
+  a.node:focus-visible {
+    outline: none;
+  }
+
+  a.node:focus-visible .halo {
+    stroke: var(--focus);
+    stroke-width: 2;
+  }
+
+  .map[data-active] .edge:not(.is-linked) {
+    opacity: 0.25;
+  }
+
+  .map[data-active] .edge.is-linked {
+    stroke: var(--edge-active);
+    stroke-width: 2.2;
+  }
+
+  .map[data-active] .node:not(.is-linked) {
+    opacity: 0.35;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: var(--step--1);
+    color: var(--fg);
+  }
+
+  .legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+</style>

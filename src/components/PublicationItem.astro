@@ -1,0 +1,154 @@
+---
+/**
+ * A single reference in journal style, with DOI, PDF and Cite actions.
+ * The Cite panel uses <details>, so it works without JavaScript; a small
+ * script adds copy-to-clipboard buttons.
+ */
+import type { Publication } from '../utils/content';
+import { authorList, formatCitation, toBibtex, venue, TYPE_SINGULAR } from '../utils/citation';
+
+interface Props {
+  entry: Publication;
+  headingLevel?: 'h3' | 'h4';
+  showAbstractLink?: boolean;
+}
+const { entry, headingLevel: H = 'h3' } = Astro.props;
+const p = entry.data;
+const v = venue(p);
+const citation = formatCitation(p);
+const bibtex = toBibtex(p);
+const topics = p.research.map((r) => r.id);
+const searchText = [p.title, ...p.authors, v, ...p.keywords, String(p.year)].join(' ').toLowerCase();
+const href = `/publications/${entry.id}/`;
+const citeId = `cite-${entry.id}`;
+---
+
+<li
+  class="pub-item border-b border-border py-6"
+  data-pub
+  data-year={p.year}
+  data-type={p.type}
+  data-topics={topics.join(' ')}
+  data-search={searchText}
+>
+  <div class="grid gap-x-8 gap-y-2 md:grid-cols-[5rem_1fr]">
+    <p class="font-serif text-step-1 text-fg-muted tabular">{p.year}</p>
+    <div class="min-w-0">
+      <H class="text-step-1 leading-snug">
+        <a href={href} class="pub-title">{p.title}</a>
+      </H>
+      <p class="mt-1 text-fg">{authorList(p.authors)}</p>
+      <p class="mt-1 text-step--1 text-fg-muted">
+        <span class="italic">{v}</span>
+        {p.volume && <span> {p.volume}</span>}
+        {p.issue && <span>({p.issue})</span>}
+        {p.pages && <span>, {p.pages}</span>}
+        {!p.pages && p.articleNumber && <span>, {p.articleNumber}</span>}
+        <span aria-hidden="true"> · </span>
+        <span>{TYPE_SINGULAR[p.type]}</span>
+        {p.status !== 'published' && <span class="badge ml-2">{p.status.replace('-', ' ')}</span>}
+      </p>
+      <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-step--1">
+        {
+          p.doi && (
+            <a href={`https://doi.org/${p.doi}`} class="pub-action" rel="noopener">
+              DOI <span class="sr-only">for {p.title}:</span> <span class="font-mono font-normal">{p.doi}</span>
+            </a>
+          )
+        }
+        {
+          p.pdf && (
+            <a href={p.pdf} class="pub-action">
+              PDF<span class="sr-only"> of {p.title}</span>
+            </a>
+          )
+        }
+        {
+          !p.doi && p.url && (
+            <a href={p.url} class="pub-action" rel="noopener">
+              Publisher page<span class="sr-only"> for {p.title}</span>
+            </a>
+          )
+        }
+        <details class="cite w-full sm:w-auto">
+          <summary class="pub-action cursor-pointer">Cite<span class="sr-only"> {p.title}</span></summary>
+          <div class="cite-panel mt-3" id={citeId}>
+            <p class="label mb-1">Reference</p>
+            <p class="cite-text" data-copy-source>{citation}</p>
+            <button type="button" class="copy-btn" data-copy hidden>Copy reference</button>
+            <p class="label mt-4 mb-1">BibTeX</p>
+            <pre class="bibtex" data-copy-source><code>{bibtex}</code></pre>
+            <button type="button" class="copy-btn" data-copy hidden>Copy BibTeX</button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</li>
+
+<style>
+  .pub-title {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .pub-title:hover {
+    text-decoration: underline;
+  }
+
+  .pub-action {
+    font-weight: 600;
+    color: var(--link);
+    text-decoration: none;
+    list-style: none;
+  }
+
+  .pub-action:hover {
+    text-decoration: underline;
+  }
+
+  summary.pub-action::-webkit-details-marker {
+    display: none;
+  }
+
+  .cite[open] {
+    flex-basis: 100%;
+  }
+
+  .cite-panel {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: var(--radius-1);
+    padding: 1rem;
+  }
+
+  .cite-text {
+    color: var(--fg);
+  }
+
+  .bibtex {
+    overflow-x: auto;
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--fg);
+    white-space: pre;
+  }
+
+  .copy-btn {
+    margin-top: 0.5rem;
+    min-height: 2.25rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-1);
+    background: var(--surface);
+    color: var(--fg-strong);
+    font-weight: 600;
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--fg-strong);
+  }
+</style>

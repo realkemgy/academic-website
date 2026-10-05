@@ -1,0 +1,29 @@
+---
+/**
+ * Analytics hook. Renders NOTHING unless PUBLIC_ANALYTICS_PROVIDER is set.
+ * No analytics are installed by default; enabling one is the owner's decision
+ * and requires updating the privacy notice and the Content Security Policy
+ * (see README > Analytics).
+ *
+ * Supported values: "plausible", "umami", "cloudflare". Each needs its own
+ * PUBLIC_ANALYTICS_* variables, documented in .env.example.
+ */
+const env = import.meta.env;
+const provider = (env.PUBLIC_ANALYTICS_PROVIDER || '').toLowerCase();
+const domain = env.PUBLIC_ANALYTICS_DOMAIN || '';
+const src = env.PUBLIC_ANALYTICS_SCRIPT_URL || '';
+const id = env.PUBLIC_ANALYTICS_ID || '';
+---
+
+{provider === 'plausible' && src && domain && <script is:inline defer data-domain={domain} src={src} />}
+{provider === 'umami' && src && id && <script is:inline defer data-website-id={id} src={src} />}
+{
+  provider === 'cloudflare' && id && (
+    <script
+      is:inline
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={JSON.stringify({ token: id })}
+    />
+  )
+}

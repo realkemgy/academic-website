@@ -1,0 +1,20 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import { getProfile } from '../../utils/content';
+import { isReal } from '../../utils/placeholders';
+const email = (await getProfile()).data.email;
+---
+
+<PageLayout
+  noindex
+  title="Message not sent"
+  eyebrow="Contact"
+  description="Your message could not be sent."
+  lede="Your message could not be sent. Please check the form and try again, or use email."
+  breadcrumbs={[{ name: 'Contact', href: '/contact/' }, { name: 'Message not sent', href: '/contact/not-sent/' }]}
+>
+  <div class="wrap section flex flex-wrap gap-4">
+    <a class="btn btn-primary" href="/contact/#contact-form">Back to the form</a>
+    {isReal(email) && <a class="btn btn-secondary" href={`mailto:${email}`}>Email {email}</a>}
+  </div>
+</PageLayout>

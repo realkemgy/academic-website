@@ -1,0 +1,16 @@
+---
+/**
+ * Renders the Markdown body of a content entry with placeholders marked.
+ * Usage: <Markdown entry={entry} />
+ */
+import { markPlaceholdersInHtml } from '../utils/placeholders';
+
+interface Props {
+  entry: { rendered?: { html: string } };
+  class?: string;
+}
+const { entry, class: className = 'prose' } = Astro.props;
+const html = markPlaceholdersInHtml(entry.rendered?.html ?? '');
+---
+
+{html.trim() && <div class={className} set:html={html} />}

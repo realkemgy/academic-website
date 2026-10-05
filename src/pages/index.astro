@@ -1,0 +1,184 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import PathwaySplit from '../components/PathwaySplit.astro';
+import ResearchNetwork from '../components/ResearchNetwork.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ResearchCard from '../components/ResearchCard.astro';
+import TeachingRow from '../components/TeachingRow.astro';
+import PublicationItem from '../components/PublicationItem.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import CallToAction from '../components/CallToAction.astro';
+import DownloadCV from '../components/DownloadCV.astro';
+import Markdown from '../components/Markdown.astro';
+import EmptyState from '../components/EmptyState.astro';
+import EditorNote from '../components/EditorNote.astro';
+import CopyButtons from '../components/CopyButtons.astro';
+import { getProfile, getSnippet, getResearch, getTeaching, getPublications, getProjects } from '../utils/content';
+
+const profile = await getProfile();
+const intro = await getSnippet('home-intro');
+const research = (await getResearch()).filter((r) => r.data.featured).slice(0, 3);
+const teaching = (await getTeaching()).filter((t) => t.data.featured);
+const publications = await getPublications();
+const selected = (publications.filter((p) => p.data.selected).length
+  ? publications.filter((p) => p.data.selected)
+  : publications
+).slice(0, 5);
+const projects = (await getProjects()).filter((p) => p.data.featured).slice(0, 3);
+---
+
+<BaseLayout>
+  <Hero />
+
+  <!-- Academic introduction -->
+  <section class="section" aria-labelledby="intro-heading">
+    <div class="wrap grid gap-6 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-3">
+        <div class="section-rule" aria-hidden="true"></div>
+        <h2 id="intro-heading" class="label label-accent mt-5 font-sans">Introduction</h2>
+      </div>
+      <div class="min-w-0 lg:col-span-8">
+        <Markdown entry={intro} class="prose intro-prose" />
+      </div>
+    </div>
+  </section>
+
+  <PathwaySplit />
+
+  <!-- Research at a Glance -->
+  <section class="section" aria-labelledby="glance-heading">
+    <div class="wrap">
+      <SectionHeading
+        id="glance-heading"
+        label="Overview"
+        title="Research at a Glance"
+        intro="Teaching and research draw on the same body of physical, quantum and computational chemistry. The map shows where the fields meet."
+      />
+      <ResearchNetwork />
+      <EditorNote class="mt-6">
+        The fields and connections in this figure are editable in <code>src/data/research-map.ts</code>. Review them so
+        they reflect your own view of how your work fits together.
+      </EditorNote>
+    </div>
+  </section>
+
+  <!-- Featured Research -->
+  <section class="section" aria-labelledby="featured-research-heading">
+    <div class="wrap">
+      <SectionHeading
+        id="featured-research-heading"
+        label="Research"
+        title="Featured Research"
+        link={{ href: '/research/', text: 'All research themes' }}
+      />
+      <div class="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+        {research.map((entry) => <ResearchCard entry={entry} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Teaching Areas -->
+  <section class="section" aria-labelledby="teaching-areas-heading">
+    <div class="wrap">
+      <SectionHeading
+        id="teaching-areas-heading"
+        label="Teaching"
+        title="Teaching Areas"
+        link={{ href: '/teaching/', text: 'Teaching and resources' }}
+      />
+      <ul class="border-t border-border">
+        {teaching.map((entry) => <TeachingRow entry={entry} />)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- Selected Publications -->
+  <section class="section" aria-labelledby="selected-pubs-heading">
+    <div class="wrap">
+      <SectionHeading
+        id="selected-pubs-heading"
+        label="Publications"
+        title="Selected Publications"
+        link={{ href: '/publications/', text: 'View All Publications' }}
+      />
+      {
+        selected.length > 0 ? (
+          <ol class="border-t border-border">
+            {selected.map((entry) => (
+              <PublicationItem entry={entry} />
+            ))}
+          </ol>
+        ) : (
+          <EmptyState title="Selected publications will appear here.">
+            <p>A short list of representative publications is being prepared.</p>
+            <EditorNote class="mt-4">
+              Add one Markdown file per publication in <code>src/content/publications/</code> (copy{' '}
+              <code>_TEMPLATE.md</code>) and set <code>selected: true</code> on three to five of them.
+            </EditorNote>
+          </EmptyState>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- Featured Software & Projects -->
+  <section class="section" aria-labelledby="featured-projects-heading">
+    <div class="wrap">
+      <SectionHeading
+        id="featured-projects-heading"
+        label="Software"
+        title="Featured Software & Projects"
+        link={{ href: '/projects/', text: 'View All Projects' }}
+      />
+      {
+        projects.length > 0 ? (
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((entry) => (
+              <ProjectCard entry={entry} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="Research software and projects will appear here.">
+            <p>Details of scientific codes, tools and computational workflows will be added.</p>
+            <EditorNote class="mt-4">
+              Add projects in <code>src/content/projects/</code> (copy <code>_TEMPLATE.md</code>) and set{' '}
+              <code>featured: true</code>.
+            </EditorNote>
+          </EmptyState>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- Short biography -->
+  <section class="section" aria-labelledby="bio-heading">
+    <div class="wrap grid gap-6 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-3">
+        <div class="section-rule" aria-hidden="true"></div>
+        <p class="label label-accent mt-5">About</p>
+        <h2 id="bio-heading" class="mt-2 text-step-3">Biography</h2>
+      </div>
+      <div class="min-w-0 lg:col-span-8">
+        <Markdown entry={profile} class="prose text-step-1" />
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <a class="arrow-link" href="/about/">Full biography and CV <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <DownloadCV />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <CallToAction />
+  <CopyButtons />
+</BaseLayout>
+
+<style>
+  :global(.intro-prose) {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.45;
+    color: var(--fg-strong);
+    max-width: 44rem;
+  }
+</style>

@@ -1,0 +1,148 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../layouts/PageLayout.astro';
+import Markdown from '../components/Markdown.astro';
+import Portrait from '../components/Portrait.astro';
+import DownloadCV from '../components/DownloadCV.astro';
+import EditorNote from '../components/EditorNote.astro';
+import Text from '../components/Text.astro';
+import { getProfile, getResearch, getTeaching, displayName } from '../utils/content';
+import { isReal, plain } from '../utils/placeholders';
+
+const profile = await getProfile();
+const research = await getResearch();
+const teaching = await getTeaching();
+const cvSections = (await getCollection('cv')).sort((a, b) => a.data.order - b.data.order);
+const shown = cvSections.filter((s) => s.data.items.length > 0 || s.rendered?.html?.trim());
+const hidden = cvSections.filter((s) => !shown.includes(s));
+
+const toc = [
+  { id: 'biography', label: 'Biography' },
+  { id: 'research-interests', label: 'Research interests' },
+  { id: 'teaching-interests', label: 'Teaching interests' },
+  ...shown.map((s) => ({ id: s.id, label: s.data.title })),
+];
+const period = (start?: string, end?: string) => [start, end].filter(Boolean).join(' – ');
+const name = displayName(profile);
+---
+
+<PageLayout
+  title="About"
+  eyebrow="Biography & CV"
+  description={`Biography, education, appointments and academic activities of ${plain(name)}.`}
+  breadcrumbs={[{ name: 'About', href: '/about/' }]}
+  type="profile"
+>
+  <div slot="intro" class="mt-6 flex flex-wrap items-center gap-4">
+    <DownloadCV variant="primary" />
+    <a class="arrow-link" href="/contact/">Contact <span class="arrow" aria-hidden="true">&rarr;</span></a>
+  </div>
+
+  <div class="wrap section grid gap-12 lg:grid-cols-12">
+    <aside class="lg:col-span-3" aria-label="On this page">
+      <div class="lg:sticky lg:top-24">
+        <Portrait class="max-w-[14rem]" loading="lazy" sizes="14rem" />
+        <nav aria-label="Sections" class="mt-8 hidden lg:block">
+          <p class="label mb-3">On this page</p>
+          <ul class="space-y-2 border-l border-border text-step--1">
+            {toc.map((t) => <li><a href={`#${t.id}`} class="toc-link">{t.label}</a></li>)}
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="min-w-0 lg:col-span-9">
+      <section aria-labelledby="biography" class="about-section first">
+        <h2 id="biography" class="text-step-3">Biography</h2>
+        <p class="mt-2 text-fg-muted">
+          <Text value={profile.data.title} />{profile.data.institution && ', '}<Text value={profile.data.institution} />
+        </p>
+        <Markdown entry={profile} class="prose mt-6 text-step-1" />
+      </section>
+
+      <section aria-labelledby="research-interests" class="about-section">
+        <h2 id="research-interests" class="text-step-3">Research interests</h2>
+        <ul class="mt-6 grid gap-4 sm:grid-cols-2">
+          {research.map((r) => (
+            <li class="border-t border-border pt-3">
+              <a href={`/research/${r.id}/`} class="font-serif text-step-1 text-fg-strong">{r.data.title}</a>
+              <Text value={r.data.summary} as="p" class="mt-1 text-step--1 text-fg-muted" />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="teaching-interests" class="about-section">
+        <h2 id="teaching-interests" class="text-step-3">Teaching interests</h2>
+        <ul class="mt-6 flex flex-wrap gap-2">
+          {teaching.map((t) => <li><a href={`/teaching/${t.id}/`} class="tag text-step-0 hover:text-fg-strong">{t.data.title}</a></li>)}
+        </ul>
+      </section>
+
+      {shown.map((s) => (
+        <section aria-labelledby={s.id} class="about-section">
+          <h2 id={s.id} class="text-step-3">{s.data.title}</h2>
+          {s.data.items.length > 0 && (
+            <ol class="mt-6 divide-y divide-border border-y border-border">
+              {s.data.items.map((item) => (
+                <li class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
+                  <p class="text-step--1 text-fg-muted tabular"><Text value={period(item.start, item.end)} /></p>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-fg-strong">
+                      {item.url && isReal(item.heading) ? <a href={item.url}>{item.heading}</a> : <Text value={item.heading} />}
+                    </p>
+                    {item.place && <Text value={item.place} as="p" class="text-fg" />}
+                    {item.detail && <Text value={item.detail} as="p" class="text-step--1 text-fg-muted" />}
+                    {item.description && <Text value={item.description} as="p" class="mt-1 text-step--1" />}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          <Markdown entry={s} class="prose mt-4" />
+        </section>
+      ))}
+
+      {hidden.length > 0 && (
+        <EditorNote class="mt-10">
+          Hidden until content is added: {hidden.map((s) => s.data.title).join(', ')}. Edit the matching files in{' '}
+          <code>src/content/cv/</code>.
+        </EditorNote>
+      )}
+
+      <div class="mt-12 flex flex-wrap items-center gap-4 border-t border-border pt-8">
+        <DownloadCV variant="primary" />
+        <p class="text-step--1 text-fg-muted">The CV contains the complete record of publications, grants and activities.</p>
+      </div>
+    </div>
+  </div>
+</PageLayout>
+
+<style>
+  .about-section {
+    padding-top: 3rem;
+    margin-top: 3rem;
+    border-top: 1px solid var(--border);
+    scroll-margin-top: 6rem;
+  }
+
+  .about-section.first {
+    padding-top: 0;
+    margin-top: 0;
+    border-top: 0;
+  }
+
+  .toc-link {
+    display: block;
+    margin-left: -1px;
+    padding: 0.15rem 0 0.15rem 0.85rem;
+    border-left: 2px solid transparent;
+    color: var(--fg-muted);
+    text-decoration: none;
+  }
+
+  .toc-link:hover {
+    color: var(--fg-strong);
+    border-left-color: var(--accent);
+  }
+</style>

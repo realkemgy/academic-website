@@ -1,0 +1,17 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Markdown from '../components/Markdown.astro';
+import { getSnippet } from '../utils/content';
+const privacy = await getSnippet('privacy');
+---
+
+<PageLayout
+  title="Privacy"
+  eyebrow="Legal"
+  description="How this website handles personal information, cookies and analytics."
+  breadcrumbs={[{ name: 'Privacy', href: '/privacy/' }]}
+>
+  <div class="wrap section">
+    <Markdown entry={privacy} class="prose" />
+  </div>
+</PageLayout>

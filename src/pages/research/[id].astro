@@ -1,0 +1,147 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../../layouts/PageLayout.astro';
+import Markdown from '../../components/Markdown.astro';
+import ListSection from '../../components/ListSection.astro';
+import ProvisionalNotice from '../../components/ProvisionalNotice.astro';
+import PublicationItem from '../../components/PublicationItem.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import CopyButtons from '../../components/CopyButtons.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import Text from '../../components/Text.astro';
+import { getPublications, getProjects, getTeaching, type Research } from '../../utils/content';
+import { isReal } from '../../utils/placeholders';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('research');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: Research;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const id = entry.id;
+
+const pubs = (await getPublications()).filter((p) => p.data.research.some((r) => r.id === id));
+const projects = (await getProjects()).filter((p) => p.data.research.some((r) => r.id === id));
+const teachingIds = new Set(d.relatedTeaching.map((t) => t.id));
+const teaching = (await getTeaching()).filter((t) => teachingIds.has(t.id));
+
+const named = (items: { name: string; affiliation?: string; role?: string; url: string }[]) => items;
+---
+
+<PageLayout
+  title={d.title}
+  eyebrow="Research theme"
+  description={isReal(d.summary) ? d.summary : `${d.title}: research overview, questions, methods and outputs.`}
+  lede={d.summary}
+  breadcrumbs={[
+    { name: 'Research', href: '/research/' },
+    { name: d.title, href: `/research/${id}/` },
+  ]}
+>
+  <div class="wrap section">
+    {!d.confirmed && <ProvisionalNotice kind="theme" />}
+
+    <ListSection title="Research overview" id="overview" show={Boolean(entry.rendered?.html?.trim())}>
+      <Markdown entry={entry} />
+    </ListSection>
+
+    <ListSection title="Research questions" id="questions" show={d.questions.length > 0}>
+      <ol class="space-y-3">
+        {d.questions.map((q, i) => (
+          <li class="flex gap-4 font-serif text-step-1 text-fg-strong">
+            <span class="text-fg-muted tabular" aria-hidden="true">Q{i + 1}</span><Text value={q} />
+          </li>
+        ))}
+      </ol>
+    </ListSection>
+
+    <ListSection title={d.confirmed ? 'Topics' : 'Topics (provisional)'} id="topics" show={d.topics.length > 0}>
+      <ul class="flex flex-wrap gap-2">{d.topics.map((t) => <li class="tag">{t}</li>)}</ul>
+    </ListSection>
+
+    <ListSection title="Current projects" id="projects-current" show={d.currentProjects.length > 0}>
+      <ul class="divide-y divide-border border-y border-border">
+        {d.currentProjects.map((p) => (
+          <li class="py-4">
+            <h3 class="text-step-1">{p.url ? <a href={p.url}>{p.title}</a> : p.title}</h3>
+            {p.status && <span class="badge mt-1">{p.status}</span>}
+            {p.description && <p class="mt-2">{p.description}</p>}
+          </li>
+        ))}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Methods" id="methods" show={d.methods.length > 0}>
+      <ul class="flex flex-wrap gap-2">{d.methods.map((m) => <li class="tag">{m}</li>)}</ul>
+    </ListSection>
+
+    <ListSection title="Computational techniques" id="techniques" show={d.techniques.length > 0}>
+      <ul class="flex flex-wrap gap-2">{d.techniques.map((m) => <li class="tag font-mono">{m}</li>)}</ul>
+    </ListSection>
+
+    <ListSection title="Scientific significance" id="significance" show={Boolean(d.significance)}>
+      <Text value={d.significance} as="p" class="max-w-measure text-step-1" />
+    </ListSection>
+
+    <ListSection title="Collaborators" id="collaborators" show={d.collaborators.length > 0}>
+      <ul class="grid gap-3 sm:grid-cols-2">
+        {named(d.collaborators).map((c) => (
+          <li><span class="font-semibold text-fg-strong">{c.url ? <a href={c.url}>{c.name}</a> : c.name}</span>{c.affiliation && <span class="block text-step--1 text-fg-muted">{c.affiliation}</span>}</li>
+        ))}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Students" id="students" show={d.students.length > 0}>
+      <ul class="grid gap-3 sm:grid-cols-2">
+        {named(d.students).map((c) => (
+          <li><span class="font-semibold text-fg-strong">{c.url ? <a href={c.url}>{c.name}</a> : c.name}</span>{c.role && <span class="block text-step--1 text-fg-muted">{c.role}</span>}</li>
+        ))}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Publications" id="pubs" show={pubs.length > 0}>
+      <ol class="border-t border-border">{pubs.map((p) => <PublicationItem entry={p} />)}</ol>
+    </ListSection>
+
+    <ListSection title="Software" id="software" show={projects.length > 0}>
+      <div class="grid gap-6 md:grid-cols-2">{projects.map((p) => <ProjectCard entry={p} />)}</div>
+    </ListSection>
+
+    <ListSection title="Datasets" id="datasets" show={d.datasets.length > 0}>
+      <ul class="divide-y divide-border border-y border-border">
+        {d.datasets.map((x) => <li class="py-3"><a href={x.url} class="font-semibold">{x.title}</a>{x.description && <p class="text-step--1 text-fg-muted">{x.description}</p>}</li>)}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Research outputs" id="outputs" show={d.outputs.length > 0}>
+      <ul class="divide-y divide-border border-y border-border">
+        {d.outputs.map((x) => <li class="py-3">{x.url ? <a href={x.url} class="font-semibold">{x.title}</a> : <span class="font-semibold">{x.title}</span>}{x.description && <p class="text-step--1 text-fg-muted">{x.description}</p>}</li>)}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Related teaching" id="teaching" show={teaching.length > 0}>
+      <ul class="flex flex-wrap gap-x-6 gap-y-2">
+        {teaching.map((t) => <li><a class="arrow-link" href={`/teaching/${t.id}/`}>{t.data.title} <span class="arrow" aria-hidden="true">&rarr;</span></a></li>)}
+      </ul>
+    </ListSection>
+
+    <ListSection title="External links" id="links" show={d.links.length > 0}>
+      <ul class="space-y-2">{d.links.map((l) => <li><a href={l.url} rel="noopener">{l.label}</a></li>)}</ul>
+    </ListSection>
+
+    <EditorNote class="mt-8">
+      Sections such as research questions, methods, collaborators, students, datasets and outputs appear automatically
+      once you fill the matching fields in <code>src/content/research/{id}.md</code>. Publications and software appear
+      here when their <code>research</code> field lists <code>{id}</code>.
+    </EditorNote>
+
+    <p class="mt-12 border-t border-border pt-6">
+      <a class="arrow-link" href="/research/"><span aria-hidden="true">&larr;</span> All research themes</a>
+    </p>
+  </div>
+  <CopyButtons />
+</PageLayout>

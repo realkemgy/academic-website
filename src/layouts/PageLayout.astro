@@ -1,0 +1,50 @@
+---
+/**
+ * Interior page layout: breadcrumbs, page title and an optional lead, followed
+ * by the page body. Keeps every inner page visually consistent.
+ */
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Text from '../components/Text.astro';
+import { breadcrumbJsonLd } from '../utils/seo';
+
+interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  lede?: string;
+  breadcrumbs?: { name: string; href: string }[];
+  jsonLd?: (Record<string, unknown> | null)[];
+  scholar?: { name: string; content: string }[];
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+}
+
+const { title, description, eyebrow, lede, breadcrumbs = [], jsonLd = [], scholar, type, noindex } = Astro.props;
+const crumbs = breadcrumbs.length ? [{ name: 'Home', href: '/' }, ...breadcrumbs] : [];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  jsonLd={[breadcrumbJsonLd(crumbs), ...jsonLd]}
+  scholar={scholar}
+  type={type}
+  noindex={noindex}
+>
+  <slot name="head" slot="head" />
+  <div class="border-b border-border">
+    <div class="wrap pt-8 pb-10 md:pt-12 md:pb-14">
+      <Breadcrumbs items={crumbs} />
+      <div class="mt-6 grid gap-6 md:mt-10 lg:grid-cols-12">
+        <div class="lg:col-span-9">
+          {eyebrow && <p class="label label-accent mb-3">{eyebrow}</p>}
+          <h1 class="text-step-5 leading-[1.05]"><Text value={title} /></h1>
+          {lede && <Text value={lede} as="p" class="lede mt-6 max-w-[44rem]" />}
+          <slot name="intro" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <slot />
+</BaseLayout>

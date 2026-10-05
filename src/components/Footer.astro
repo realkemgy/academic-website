@@ -1,0 +1,98 @@
+---
+import { getProfile, displayName, profileLinks, publicFileExists } from '../utils/content';
+import { isReal } from '../utils/placeholders';
+import Text from './Text.astro';
+
+const profile = await getProfile();
+const d = profile.data;
+const links = profileLinks(profile);
+const year = new Date().getFullYear();
+const built = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+const cvAvailable = publicFileExists(d.cv);
+
+const siteLinks = [
+  { label: 'Teaching', href: '/teaching/' },
+  { label: 'Research', href: '/research/' },
+  { label: 'Publications', href: '/publications/' },
+  { label: 'Software & Projects', href: '/projects/' },
+];
+const aboutLinks = [
+  { label: 'About', href: '/about/' },
+  { label: 'Contact', href: '/contact/' },
+  ...(cvAvailable ? [{ label: 'Download CV (PDF)', href: d.cv }] : []),
+  { label: 'Privacy', href: '/privacy/' },
+];
+---
+
+<footer class="mt-auto border-t border-border bg-surface-2">
+  <div class="wrap grid gap-10 py-12 md:grid-cols-12 md:py-16">
+    <div class="md:col-span-5">
+      <p class="font-serif text-step-2 text-fg-strong"><Text value={displayName(profile)} /></p>
+      <p class="mt-2 text-fg"><Text value={d.title} /></p>
+      <p class="text-fg-muted">
+        <Text value={d.department} />{d.department && d.institution && ', '}<Text value={d.institution} />
+      </p>
+      {
+        d.email && (
+          <p class="mt-4">
+            {isReal(d.email) ? (
+              <a href={`mailto:${d.email}`}>{d.email}</a>
+            ) : (
+              <Text value={d.email} />
+            )}
+          </p>
+        )
+      }
+    </div>
+
+    <nav aria-label="Footer" class="grid grid-cols-2 gap-8 sm:grid-cols-3 md:col-span-7">
+      <div>
+        <p class="label mb-3">Site</p>
+        <ul class="space-y-2">
+          {siteLinks.map((l) => <li><a class="footer-link" href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </div>
+      <div>
+        <p class="label mb-3">About</p>
+        <ul class="space-y-2">
+          {aboutLinks.map((l) => <li><a class="footer-link" href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </div>
+      {
+        links.length > 0 && (
+          <div>
+            <p class="label mb-3">Profiles</p>
+            <ul class="space-y-2">
+              {links.map((l) => (
+                <li>
+                  <a class="footer-link" href={l.url} rel="me noopener">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </nav>
+  </div>
+
+  <div class="border-t border-border">
+    <div class="wrap flex flex-col gap-2 py-5 text-step--1 text-fg-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>&copy; {year} <Text value={d.name} /></p>
+      <p>Last updated <time datetime={new Date().toISOString().slice(0, 10)}>{built}</time></p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-link {
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .footer-link:hover {
+    color: var(--fg-strong);
+    text-decoration: underline;
+  }
+</style>

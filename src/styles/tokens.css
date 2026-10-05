@@ -1,0 +1,171 @@
+/*
+ * Design tokens. Edit values here; every component reads from these.
+ *
+ * Palette: neutral paper, navy ink, muted scientific blue for links and an
+ * oxblood accent used sparingly (section rules, figure numbers, active nav).
+ * All text pairs were checked against WCAG 2.2 AA (see README > Accessibility).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Colour: surfaces */
+  --surface: #faf9f6; /* page background, warm white */
+  --surface-2: #f1efea; /* subtle panels */
+  --surface-3: #e8e5de; /* pressed / figure ground */
+
+  /* Colour: text */
+  --fg-strong: #0f1b2d; /* headings, near-black navy (16.4:1) */
+  --fg: #232a35; /* body charcoal (13.7:1) */
+  --fg-muted: #56606e; /* secondary slate (6.1:1) */
+
+  /* Colour: lines */
+  --border: #dcd8d0; /* decorative hairlines */
+  --border-strong: #b8b2a6;
+  --control-border: #7e8794; /* form controls and focusable outlines (3.4:1) */
+
+  /* Colour: brand and accents */
+  --brand: #14243b; /* deep navy: primary buttons, header mark */
+  --brand-hover: #22385a;
+  --brand-fg: #faf9f6;
+  --link: #2f5277; /* muted scientific blue (7.7:1) */
+  --accent: #7d2b36; /* oxblood (8.8:1) */
+  --focus: #2f5277;
+  --selection: #d9e3ef;
+
+  /* Colour: dark band (collaboration call to action, footer) */
+  --band: #14243b;
+  --band-fg: #faf9f6;
+  --band-fg-hover: #e4e9f0;
+  --band-muted: #c9d3e0;
+
+  /* Colour: semantic */
+  --danger: #a32020;
+  --success: #1f6b3a;
+
+  /* Colour: placeholder marking */
+  --ph-bg: #fff1c2;
+  --ph-fg: #5c4300;
+  --ph-border: #b38a1e;
+
+  /* Colour: research map */
+  --node-teaching: #14243b;
+  --node-research: #7d2b36;
+  --node-concept: #faf9f6;
+  --edge: #b8b2a6;
+  --edge-active: #2f5277;
+
+  /* Typography */
+  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Georgia,
+    serif;
+  --font-text: 'Source Sans 3 Variable', 'Source Sans 3', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-data: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+
+  /* Fluid type scale (minor third at small sizes, wider at display sizes) */
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: clamp(1.3rem, 1.15rem + 0.6vw, 1.6rem);
+  --step-3: clamp(1.6rem, 1.3rem + 1.2vw, 2.25rem);
+  --step-4: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
+  --step-5: clamp(2.4rem, 1.6rem + 3.6vw, 4.5rem);
+
+  /* Space (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --section-gap: clamp(3.5rem, 2.5rem + 4vw, 6.5rem);
+
+  /* Widths */
+  --page-width: 76rem;
+  --measure: 40rem; /* about 65 characters of body text */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+
+  /* Shape and depth (restrained on purpose) */
+  --radius-1: 3px;
+  --radius-2: 6px;
+  --shadow-1: 0 1px 2px rgb(15 27 45 / 0.06), 0 2px 8px rgb(15 27 45 / 0.05);
+
+  /* Motion */
+  --dur: 160ms;
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --surface: #0e131a;
+    --surface-2: #151c26;
+    --surface-3: #1c2531;
+    --fg-strong: #f2f4f7;
+    --fg: #d7dce3;
+    --fg-muted: #9aa5b4;
+    --border: #273140;
+    --border-strong: #3a4657;
+    --control-border: #6f7b8c;
+    --brand: #bfd1e8;
+    --brand-hover: #d6e2f1;
+    --brand-fg: #0e131a;
+    --link: #8fb4dd;
+    --accent: #e5a3ac;
+    --focus: #8fb4dd;
+    --selection: #26405f;
+    --band: #151c26;
+    --band-fg: #f2f4f7;
+    --band-fg-hover: #d7dce3;
+    --band-muted: #9aa5b4;
+    --danger: #f08a8a;
+    --success: #7fd19b;
+    --ph-bg: #3a2e0a;
+    --ph-fg: #f5de9a;
+    --ph-border: #b38a1e;
+    --node-teaching: #bfd1e8;
+    --node-research: #e5a3ac;
+    --node-concept: #0e131a;
+    --edge: #3a4657;
+    --edge-active: #8fb4dd;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface: #0e131a;
+  --surface-2: #151c26;
+  --surface-3: #1c2531;
+  --fg-strong: #f2f4f7;
+  --fg: #d7dce3;
+  --fg-muted: #9aa5b4;
+  --border: #273140;
+  --border-strong: #3a4657;
+  --control-border: #6f7b8c;
+  --brand: #bfd1e8;
+  --brand-hover: #d6e2f1;
+  --brand-fg: #0e131a;
+  --link: #8fb4dd;
+  --accent: #e5a3ac;
+  --focus: #8fb4dd;
+  --selection: #26405f;
+  --band: #151c26;
+  --band-fg: #f2f4f7;
+  --band-fg-hover: #d7dce3;
+  --band-muted: #9aa5b4;
+  --danger: #f08a8a;
+  --success: #7fd19b;
+  --ph-bg: #3a2e0a;
+  --ph-fg: #f5de9a;
+  --ph-border: #b38a1e;
+  --node-teaching: #bfd1e8;
+  --node-research: #e5a3ac;
+  --node-concept: #0e131a;
+  --edge: #3a4657;
+  --edge-active: #8fb4dd;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
+}

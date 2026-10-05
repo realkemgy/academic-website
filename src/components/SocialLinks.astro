@@ -1,0 +1,25 @@
+---
+/** Scholarly and social profiles. Only links with genuine URLs are shown. */
+import { getProfile, profileLinks } from '../utils/content';
+
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+const links = profileLinks(await getProfile());
+---
+
+{
+  links.length > 0 && (
+    <ul class:list={['divide-y divide-border border-y border-border', className]}>
+      {links.map((l) => (
+        <li>
+          <a href={l.url} rel="me noopener" class="flex min-h-12 items-center justify-between gap-4 py-2 text-fg-strong no-underline hover:underline">
+            <span class="font-semibold">{l.label}</span>
+            <span class="truncate text-step--1 text-fg-muted">{l.url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

@@ -1,0 +1,152 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import PublicationItem from '../../components/PublicationItem.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import CopyButtons from '../../components/CopyButtons.astro';
+import SocialLinks from '../../components/SocialLinks.astro';
+import { getPublications, getResearch, getProfile, profileLinks } from '../../utils/content';
+import { TYPE_LABELS, publicationTypes } from '../../utils/citation';
+
+const pubs = await getPublications();
+const themes = await getResearch();
+const scholarly = profileLinks(await getProfile()).filter((l) => ['orcid', 'googleScholar', 'researchGate'].includes(l.key));
+
+const groups = publicationTypes
+  .map((type) => ({ type, label: TYPE_LABELS[type], items: pubs.filter((p) => p.data.type === type) }))
+  .filter((g) => g.items.length);
+const years = [...new Set(pubs.map((p) => p.data.year))].sort((a, b) => b - a);
+const usedThemes = themes.filter((t) => pubs.some((p) => p.data.research.some((r) => r.id === t.id)));
+---
+
+<PageLayout
+  title="Publications"
+  eyebrow="Research outputs"
+  description="Journal articles, conference papers, book chapters, preprints and reviews, with DOI links and citations."
+  lede="Journal articles, conference papers, book chapters, preprints and reviews."
+  breadcrumbs={[{ name: 'Publications', href: '/publications/' }]}
+>
+  <div class="wrap section">
+    {
+      pubs.length === 0 ? (
+        <>
+          <EmptyState title="Publications will be listed here.">
+            <p>The publication record for this site is being compiled.</p>
+            {scholarly.length > 0 && <p class="mt-2">In the meantime, publications are available through the profiles below.</p>}
+            <EditorNote class="mt-4">
+              Add one file per publication in <code>src/content/publications/</code> by copying <code>_TEMPLATE.md</code>.
+              Search, year and topic filters, sorting, DOI and PDF links, citation export and Google Scholar metadata
+              appear automatically. Only add genuine publications.
+            </EditorNote>
+          </EmptyState>
+          {scholarly.length > 0 && <SocialLinks class="mt-8 max-w-xl" />}
+        </>
+      ) : (
+        <>
+          <form class="filters mb-10 grid gap-4 rounded-md border border-border bg-surface-2 p-4 md:grid-cols-12 md:p-5" data-pub-filters hidden role="search" aria-label="Filter publications">
+            <div class="md:col-span-4">
+              <label for="pub-search" class="field-label text-step--1">Search</label>
+              <input id="pub-search" name="q" type="search" class="control" placeholder="Title, author, journal, keyword" autocomplete="off" />
+            </div>
+            <div class="md:col-span-2">
+              <label for="pub-year" class="field-label text-step--1">Year</label>
+              <select id="pub-year" name="year" class="control">
+                <option value="">All years</option>
+                {years.map((y) => <option value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div class="md:col-span-3">
+              <label for="pub-topic" class="field-label text-step--1">Research topic</label>
+              <select id="pub-topic" name="topic" class="control">
+                <option value="">All topics</option>
+                {usedThemes.map((t) => <option value={t.id}>{t.data.title}</option>)}
+              </select>
+            </div>
+            <div class="md:col-span-3">
+              <label for="pub-sort" class="field-label text-step--1">Sort</label>
+              <select id="pub-sort" name="sort" class="control">
+                <option value="desc">Newest to oldest</option>
+                <option value="asc">Oldest to newest</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 md:col-span-12">
+              <p class="text-step--1 text-fg-muted" aria-live="polite" data-pub-count>
+                {pubs.length} publication{pubs.length === 1 ? '' : 's'}
+              </p>
+              <button type="reset" class="btn btn-secondary min-h-10 px-3 py-1 text-step--1">Clear filters</button>
+            </div>
+          </form>
+
+          <nav aria-label="Publication categories" class="mb-10 flex flex-wrap gap-x-6 gap-y-2 text-step--1">
+            {groups.map((g) => <a href={`#${g.type}`} class="font-semibold">{g.label} <span class="font-normal text-fg-muted tabular">({g.items.length})</span></a>)}
+          </nav>
+
+          {groups.map((g) => (
+            <section class="pub-group mb-14" aria-labelledby={g.type} data-pub-group>
+              <h2 id={g.type} class="flex items-baseline justify-between gap-4 border-b-2 border-fg-strong pb-3 text-step-3">
+                {g.label}
+                <span class="text-step--1 font-sans font-normal text-fg-muted tabular" data-group-count>{g.items.length}</span>
+              </h2>
+              <ol data-pub-list>
+                {g.items.map((entry) => <PublicationItem entry={entry} />)}
+              </ol>
+            </section>
+          ))}
+          <p class="text-fg-muted" data-pub-empty hidden>No publications match these filters.</p>
+        </>
+      )
+    }
+  </div>
+  <CopyButtons />
+</PageLayout>
+
+<script>
+  // Client-side filtering over the server-rendered list. Without JavaScript the
+  // full list is shown and the filter form stays hidden.
+  const form = document.querySelector<HTMLFormElement>('[data-pub-filters]');
+  if (form) {
+    form.hidden = false;
+    const items = [...document.querySelectorAll<HTMLElement>('[data-pub]')];
+    const groups = [...document.querySelectorAll<HTMLElement>('[data-pub-group]')];
+    const count = form.querySelector<HTMLElement>('[data-pub-count]')!;
+    const empty = document.querySelector<HTMLElement>('[data-pub-empty]')!;
+
+    const apply = () => {
+      const data = new FormData(form);
+      const q = String(data.get('q') || '').trim().toLowerCase();
+      const year = String(data.get('year') || '');
+      const topic = String(data.get('topic') || '');
+      const asc = data.get('sort') === 'asc';
+      let shown = 0;
+
+      for (const item of items) {
+        const match =
+          (!q || q.split(/\s+/).every((w) => item.dataset.search!.includes(w))) &&
+          (!year || item.dataset.year === year) &&
+          (!topic || item.dataset.topics!.split(' ').includes(topic));
+        item.hidden = !match;
+        if (match) shown++;
+      }
+
+      for (const group of groups) {
+        const list = group.querySelector('[data-pub-list]')!;
+        const rows = [...list.children] as HTMLElement[];
+        rows.sort((a, b) => {
+          const d = Number(a.dataset.year) - Number(b.dataset.year);
+          return asc ? d : -d;
+        });
+        list.append(...rows);
+        const visible = rows.filter((r) => !r.hidden).length;
+        group.hidden = visible === 0;
+        group.querySelector('[data-group-count]')!.textContent = String(visible);
+      }
+
+      empty.hidden = shown > 0;
+      count.textContent = `${shown} publication${shown === 1 ? '' : 's'}${shown < items.length ? ` of ${items.length}` : ''}`;
+    };
+
+    form.addEventListener('input', apply);
+    form.addEventListener('submit', (e) => e.preventDefault());
+    form.addEventListener('reset', () => setTimeout(apply));
+  }
+</script>

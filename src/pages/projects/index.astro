@@ -1,0 +1,49 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import { getProjects } from '../../utils/content';
+
+const projects = await getProjects();
+const active = projects.filter((p) => !['completed', 'archived'].includes(p.data.status));
+const past = projects.filter((p) => ['completed', 'archived'].includes(p.data.status));
+---
+
+<PageLayout
+  title="Software & Projects"
+  eyebrow="Practical scientific output"
+  description="Research software, scientific tools, computational workflows and projects."
+  lede="Research codes, scientific tools and computational workflows, with the problems they address and where to find them."
+  breadcrumbs={[{ name: 'Software & Projects', href: '/projects/' }]}
+>
+  <div class="wrap section">
+    {
+      projects.length === 0 ? (
+        <EmptyState title="Software and projects will be listed here.">
+          <p>Descriptions of research software and projects, with links to code, documentation and related publications, are being prepared.</p>
+          <EditorNote class="mt-4">
+            Add one file per project in <code>src/content/projects/</code> by copying <code>_TEMPLATE.md</code>. Each
+            project can record the scientific problem, research context, methods, languages, technologies, status,
+            repository, documentation, demo and a linked publication. List only confirmed technologies.
+          </EditorNote>
+        </EmptyState>
+      ) : (
+        <>
+          {active.length > 0 && (
+            <section aria-labelledby="active-heading" class="mb-16">
+              <h2 id="active-heading" class="mb-6 border-b-2 border-fg-strong pb-3 text-step-3">Current</h2>
+              <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{active.map((p) => <ProjectCard entry={p} />)}</div>
+            </section>
+          )}
+          {past.length > 0 && (
+            <section aria-labelledby="past-heading">
+              <h2 id="past-heading" class="mb-6 border-b-2 border-fg-strong pb-3 text-step-3">Completed and archived</h2>
+              <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{past.map((p) => <ProjectCard entry={p} />)}</div>
+            </section>
+          )}
+        </>
+      )
+    }
+  </div>
+</PageLayout>

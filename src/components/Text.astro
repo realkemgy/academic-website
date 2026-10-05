@@ -1,0 +1,16 @@
+---
+/**
+ * Renders a plain string, escaping HTML and marking [PLACEHOLDERS] visibly.
+ * Usage: <Text value={profile.data.title} as="span" />
+ */
+import { markPlaceholders } from '../utils/placeholders';
+
+interface Props {
+  value: string | undefined;
+  as?: 'span' | 'p' | 'strong' | 'em' | 'div';
+  class?: string;
+}
+const { value = '', as: Tag = 'span', class: className } = Astro.props;
+---
+
+<Tag class={className} set:html={markPlaceholders(value)} />

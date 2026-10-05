@@ -1,0 +1,46 @@
+---
+/**
+ * Research & Collaboration band. Text comes from
+ * src/content/snippets/collaboration.md.
+ */
+import { getProfile, getSnippet } from '../utils/content';
+import { isReal } from '../utils/placeholders';
+import Markdown from './Markdown.astro';
+
+const profile = await getProfile();
+const snippet = await getSnippet('collaboration');
+const email = profile.data.email;
+---
+
+<section class="band" aria-labelledby="collab-heading">
+  <div class="wrap grid gap-8 py-14 md:py-20 lg:grid-cols-12 lg:items-end">
+    <div class="lg:col-span-7">
+      <p class="label band-label mb-3">Enquiries</p>
+      <h2 id="collab-heading" class="text-step-4 band-heading">Research &amp; Collaboration</h2>
+      <Markdown entry={snippet} class="band-copy mt-5 max-w-measure text-step-1" />
+    </div>
+    <div class="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">
+      <a class="btn btn-on-band" href="/contact/">Get in touch</a>
+      {isReal(email) && <a class="btn btn-ghost-on-band" href={`mailto:${email}`}>Email directly</a>}
+    </div>
+  </div>
+</section>
+
+<style>
+  .band {
+    background: var(--band);
+    color: var(--band-fg);
+  }
+
+  .band-heading {
+    color: var(--band-fg);
+  }
+
+  .band-label {
+    color: var(--band-muted);
+  }
+
+  .band :global(.band-copy) {
+    color: var(--band-muted);
+  }
+</style>

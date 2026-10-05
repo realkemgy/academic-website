@@ -1,0 +1,17 @@
+---
+/** Banner for subjects and themes whose topics are not yet confirmed. */
+import { SITE } from '../config/site';
+interface Props {
+  kind: 'subject' | 'theme';
+}
+const { kind } = Astro.props;
+---
+
+{
+  SITE.showEditorNotes && (
+    <aside class="editor-note" aria-label="Provisional content">
+      <strong>Provisional {kind === 'subject' ? 'subject' : 'research theme'}:</strong> the topics listed are illustrative
+      examples awaiting confirmation. Set <code>confirmed: true</code> in the file once they are accurate.
+    </aside>
+  )
+}

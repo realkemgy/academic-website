@@ -1,0 +1,64 @@
+# Azure Static Web Apps deployment workflow (template).
+#
+# 1. Create the Static Web App in Azure and choose "Other" for the deployment
+#    source (or let Azure create a workflow, then replace it with this file).
+# 2. Copy the deployment token from the Azure portal into a GitHub secret named
+#    AZURE_STATIC_WEB_APPS_API_TOKEN.
+# 3. Copy this file to .github/workflows/azure-static-web-apps.yml.
+#
+# The site and API are built here with the pinned Node version, then uploaded
+# prebuilt (skip_app_build / skip_api_build), so the Azure build service does
+# not need to guess the Node version. Pull requests get preview environments.
+name: Azure Static Web Apps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build_and_deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    env:
+      # Production builds index; preview builds never do.
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+      PUBLIC_ALLOW_INDEXING: ${{ github.event_name == 'push' && vars.PUBLIC_ALLOW_INDEXING || 'false' }}
+      PUBLIC_SHOW_EDITOR_NOTES: ${{ vars.PUBLIC_SHOW_EDITOR_NOTES }}
+      PUBLIC_CONTACT_FORM_ENABLED: ${{ vars.PUBLIC_CONTACT_FORM_ENABLED }}
+      PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:azure-api
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: dist
+          api_location: .azure-api
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
+
+  close_preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close

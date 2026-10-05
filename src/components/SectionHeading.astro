@@ -1,0 +1,36 @@
+---
+/**
+ * Section opener: hairline rule with an accent segment, a running-head label
+ * and the section heading. Optional link appears on the right on wide screens.
+ */
+interface Props {
+  label?: string;
+  title: string;
+  id?: string;
+  level?: 'h2' | 'h3';
+  link?: { href: string; text: string };
+  intro?: string;
+}
+const { label, title, id, level: H = 'h2', link, intro } = Astro.props;
+---
+
+<header class="mb-8 md:mb-10">
+  <div class="section-rule" aria-hidden="true"></div>
+  <div class="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+    <div class="min-w-0">
+      {label && <p class="label label-accent mb-2">{label}</p>}
+      <H id={id} class="text-step-3">{title}</H>
+    </div>
+    {
+      link && (
+        <a class="arrow-link shrink-0" href={link.href}>
+          {link.text}
+          <span class="arrow" aria-hidden="true">
+            &rarr;
+          </span>
+        </a>
+      )
+    }
+  </div>
+  {intro && <p class="mt-4 max-w-measure text-fg-muted">{intro}</p>}
+</header>

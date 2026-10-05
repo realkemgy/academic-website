@@ -1,0 +1,20 @@
+---
+/**
+ * Guidance for whoever edits the site. Shown only while
+ * PUBLIC_SHOW_EDITOR_NOTES is not "false"; never shown after launch.
+ */
+import { SITE } from '../config/site';
+
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+{
+  SITE.showEditorNotes && (
+    <aside class:list={['editor-note', className]} aria-label="Note for site editors">
+      <strong>Editor note:</strong> <slot />
+    </aside>
+  )
+}

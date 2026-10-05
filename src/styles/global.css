@@ -1,0 +1,547 @@
+/*
+ * Global stylesheet: fonts, design tokens, base typography and a small set of
+ * component classes. Page components use Tailwind utilities that resolve to
+ * the tokens below, so colours and type are defined in exactly one place.
+ *
+ * Layout concept: an editorial page with a narrow "margin" column for section
+ * labels (like running heads in a journal) beside a wide reading column.
+ */
+
+@import 'tailwindcss';
+
+/* Self-hosted variable fonts (no third-party font requests). */
+@import '@fontsource-variable/source-serif-4/opsz.css';
+@import '@fontsource-variable/source-serif-4/opsz-italic.css';
+@import '@fontsource-variable/source-sans-3/index.css';
+@import '@fontsource-variable/source-sans-3/wght-italic.css';
+
+@import './tokens.css';
+
+/* ------------------------------------------------------------------ */
+/* Tailwind theme: map utilities onto the runtime tokens               */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-text);
+  --font-mono: var(--font-data);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-fg: var(--fg);
+  --color-fg-strong: var(--fg-strong);
+  --color-fg-muted: var(--fg-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-control: var(--control-border);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-link: var(--link);
+  --color-accent: var(--accent);
+  --color-band: var(--band);
+  --color-band-fg: var(--band-fg);
+  --color-band-muted: var(--band-muted);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --text-step--1: var(--step--1);
+  --text-step-0: var(--step-0);
+  --text-step-1: var(--step-1);
+  --text-step-2: var(--step-2);
+  --text-step-3: var(--step-3);
+  --text-step-4: var(--step-4);
+  --text-step-5: var(--step-5);
+
+  --container-measure: var(--measure);
+  --container-page: var(--page-width);
+
+  --radius-sm: var(--radius-1);
+  --radius-md: var(--radius-2);
+}
+
+/* Breakpoints (Tailwind defaults kept deliberately): sm 40rem, md 48rem,
+   lg 64rem, xl 80rem, 2xl 96rem. */
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: 5.5rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--fg);
+    font-family: var(--font-text);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    font-feature-settings: 'kern', 'liga';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--fg-strong);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    font-optical-sizing: auto;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+
+  a {
+    color: var(--link);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--selection);
+    color: var(--fg-strong);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  abbr[title] {
+    text-decoration: underline dotted;
+    cursor: help;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* Page container with a 16px minimum gutter at every width. */
+  .wrap {
+    width: 100%;
+    max-width: var(--page-width);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Vertical rhythm between major sections. */
+  .section {
+    padding-block: var(--section-gap);
+  }
+
+  .section + .section {
+    padding-top: 0;
+  }
+
+  /* Small uppercase label used for section running heads and metadata. */
+  .label {
+    font-family: var(--font-text);
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .label-accent {
+    color: var(--accent);
+  }
+
+  /* Lead paragraph set in the display face. */
+  .lede {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.4;
+    color: var(--fg-strong);
+    font-weight: 400;
+    font-optical-sizing: auto;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55em;
+    min-height: 2.75rem; /* 44px touch target */
+    padding: 0.6rem 1.15rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-1);
+    font-family: var(--font-text);
+    font-size: var(--step-0);
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+
+  .btn:hover {
+    text-decoration: none;
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background: var(--brand);
+    color: var(--brand-fg);
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-hover);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--fg-strong);
+    border-color: var(--control-border);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--fg-strong);
+    background: var(--surface-2);
+  }
+
+  .btn-on-band {
+    background: var(--band-fg);
+    color: var(--band);
+  }
+
+  .btn-on-band:hover {
+    background: var(--band-fg-hover);
+  }
+
+  .btn-ghost-on-band {
+    background: transparent;
+    color: var(--band-fg);
+    border-color: var(--band-muted);
+  }
+
+  .btn-ghost-on-band:hover {
+    border-color: var(--band-fg);
+  }
+
+  .btn[aria-disabled='true'],
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Text link with an arrow that nudges on hover. */
+  .arrow-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-weight: 600;
+    color: var(--link);
+    text-decoration: none;
+  }
+
+  .arrow-link:hover {
+    text-decoration: underline;
+  }
+
+  .arrow-link .arrow {
+    display: inline-block;
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .arrow-link:hover .arrow,
+  .arrow-link:focus-visible .arrow,
+  .pathway:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  /* Small tag used for topics and keywords. */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    line-height: 1.5;
+    color: var(--fg-muted);
+    background: var(--surface);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-1);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--border-strong);
+    color: var(--fg-muted);
+  }
+
+  /* Placeholder marking: deliberately looks like an editor's mark so it can
+     never be mistaken for genuine content. */
+  .ph {
+    background: var(--ph-bg);
+    color: var(--ph-fg);
+    border-bottom: 1px dashed var(--ph-border);
+    padding: 0 0.15em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    font-style: normal;
+  }
+
+  .editor-note {
+    border: 1px dashed var(--ph-border);
+    background: var(--ph-bg);
+    color: var(--ph-fg);
+    border-radius: var(--radius-1);
+    padding: 0.75rem 1rem;
+    font-size: var(--step--1);
+    line-height: 1.5;
+  }
+
+  .editor-note code {
+    font-family: var(--font-data);
+    font-size: 0.95em;
+    overflow-wrap: anywhere;
+  }
+
+  /* Long-form reading text rendered from Markdown. */
+  .prose {
+    max-width: var(--measure);
+    color: var(--fg);
+  }
+
+  .prose > * + * {
+    margin-top: 1.05em;
+  }
+
+  .prose h2 {
+    font-size: var(--step-3);
+    margin-top: 2em;
+  }
+
+  .prose h3 {
+    font-size: var(--step-2);
+    margin-top: 1.6em;
+  }
+
+  .prose h2 + *,
+  .prose h3 + * {
+    margin-top: 0.6em;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.25em;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li + li {
+    margin-top: 0.35em;
+  }
+
+  .prose li::marker {
+    color: var(--fg-muted);
+  }
+
+  .prose blockquote {
+    border-left: 2px solid var(--accent);
+    padding-left: 1rem;
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--fg-strong);
+  }
+
+  .prose code {
+    font-family: var(--font-data);
+    font-size: 0.9em;
+    background: var(--surface-2);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+
+  .prose pre {
+    overflow-x: auto;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    border-radius: var(--radius-1);
+  }
+
+  .prose pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .prose img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: var(--step--1);
+  }
+
+  .prose th,
+  .prose td {
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .prose th {
+    font-weight: 600;
+    color: var(--fg-strong);
+  }
+
+  /* Hairline rule with a short accent segment, used to open sections. */
+  .section-rule {
+    position: relative;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-rule::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 2.5rem;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  /* Form controls */
+  .field-label {
+    display: block;
+    font-weight: 600;
+    color: var(--fg-strong);
+    margin-bottom: 0.35rem;
+  }
+
+  .field-hint {
+    display: block;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+    margin-top: 0.3rem;
+  }
+
+  .field-error {
+    display: block;
+    font-size: var(--step--1);
+    color: var(--danger);
+    margin-top: 0.35rem;
+    font-weight: 600;
+  }
+
+  .control {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-1);
+    background: var(--surface);
+    color: var(--fg-strong);
+    font: inherit;
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  .control:hover {
+    border-color: var(--fg-muted);
+  }
+
+  .control:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--fg-strong);
+  }
+
+  .control[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+
+  textarea.control {
+    min-height: 10rem;
+    resize: vertical;
+  }
+
+  /* Visually hidden but available to assistive technology. */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

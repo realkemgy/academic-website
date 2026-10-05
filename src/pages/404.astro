@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const routes = [
+  { href: '/', label: 'Home', note: 'Start from the beginning' },
+  { href: '/research/', label: 'Research', note: 'Themes, methods and outputs' },
+  { href: '/teaching/', label: 'Teaching', note: 'Subjects and learning resources' },
+  { href: '/publications/', label: 'Publications', note: 'Articles, papers and citations' },
+];
+---
+
+<BaseLayout title="Page not found" description="The page you were looking for could not be found." noindex>
+  <section class="wrap section">
+    <div class="grid gap-10 lg:grid-cols-12">
+      <div class="lg:col-span-7">
+        <p class="label label-accent">Error 404</p>
+        <h1 class="mt-4 text-step-5 leading-[1.05]">This page could not be found.</h1>
+        <p class="lede mt-6 max-w-[36rem]">
+          The address may be mistyped, or the page may have moved. One of these sections should help.
+        </p>
+      </div>
+      <p class="hidden font-serif text-[9rem] leading-none text-border-strong lg:col-span-5 lg:block lg:text-right" aria-hidden="true">
+        <span class="italic">ψ</span> = 0
+      </p>
+    </div>
+    <ul class="mt-12 grid border-t border-border sm:grid-cols-2 lg:grid-cols-4">
+      {
+        routes.map((r) => (
+          <li class="border-b border-border sm:odd:border-r lg:border-r lg:last:border-r-0">
+            <a href={r.href} class="block p-5 no-underline hover:bg-surface-2">
+              <span class="font-serif text-step-2 text-fg-strong">{r.label}</span>
+              <span class="mt-1 block text-step--1 text-fg-muted">{r.note}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>

@@ -1,0 +1,63 @@
+---
+/**
+ * Professional portrait. Uses an optimised responsive image when a portrait is
+ * set in profile.md; otherwise shows a neutral, clearly labelled frame.
+ * No generated or stock photograph is ever used in place of the academic.
+ */
+import { Picture } from 'astro:assets';
+import { getProfile } from '../utils/content';
+import { isReal } from '../utils/placeholders';
+
+interface Props {
+  class?: string;
+  sizes?: string;
+  loading?: 'eager' | 'lazy';
+}
+const { class: className = '', sizes = '(min-width: 64rem) 22rem, 80vw', loading = 'eager' } = Astro.props;
+const profile = await getProfile();
+const { portrait, portraitAlt, name } = profile.data;
+const alt = portraitAlt || (isReal(name) ? `Portrait of ${name}` : 'Portrait');
+---
+
+<figure class:list={['portrait', className]}>
+  {
+    portrait ? (
+      <Picture
+        src={portrait}
+        alt={alt}
+        widths={[320, 480, 640, 960]}
+        sizes={sizes}
+        formats={['avif', 'webp']}
+        loading={loading}
+        class="block aspect-[4/5] w-full object-cover"
+      />
+    ) : (
+      <div class="portrait-placeholder" role="img" aria-label="Portrait placeholder: no portrait supplied yet">
+        <svg viewBox="0 0 200 250" aria-hidden="true" class="h-full w-full">
+          <g fill="none" stroke="currentColor" stroke-width="0.8">
+            <ellipse cx="100" cy="98" rx="34" ry="40" />
+            <path d="M40 232c6-44 30-66 60-66s54 22 60 66" />
+          </g>
+        </svg>
+        <span class="ph absolute bottom-3 left-3 text-step--1">[PORTRAIT]</span>
+      </div>
+    )
+  }
+</figure>
+
+<style>
+  .portrait {
+    position: relative;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .portrait-placeholder {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    max-width: 100%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--border-strong);
+  }
+</style>

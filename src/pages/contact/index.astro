@@ -1,0 +1,76 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import ContactForm from '../../components/ContactForm.astro';
+import SocialLinks from '../../components/SocialLinks.astro';
+import Markdown from '../../components/Markdown.astro';
+import Text from '../../components/Text.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import { getProfile, getSnippet, profileLinks } from '../../utils/content';
+import { isReal } from '../../utils/placeholders';
+
+const profile = await getProfile();
+const d = profile.data;
+const collaboration = await getSnippet('collaboration');
+const preferences = await getSnippet('contact-preferences');
+const hasLinks = profileLinks(profile).length > 0;
+
+const details = [
+  { label: 'Email', value: d.email, href: isReal(d.email) ? `mailto:${d.email}` : undefined },
+  { label: 'Department', value: d.department },
+  { label: 'Institution', value: d.institution },
+  { label: 'Office', value: d.office },
+].filter((x) => x.value);
+---
+
+<PageLayout
+  title="Contact"
+  eyebrow="Get in touch"
+  description="Contact details, academic profiles and an enquiry form for research collaboration, graduate research and academic opportunities."
+  breadcrumbs={[{ name: 'Contact', href: '/contact/' }]}
+>
+  <div class="wrap section grid gap-14 lg:grid-cols-12">
+    <div class="min-w-0 lg:col-span-5">
+      <section aria-labelledby="collab-title">
+        <h2 id="collab-title" class="text-step-3">Research &amp; Collaboration</h2>
+        <Markdown entry={collaboration} class="prose mt-4 text-step-1" />
+      </section>
+
+      <section aria-labelledby="details-title" class="mt-12">
+        <h2 id="details-title" class="label label-accent font-sans">Contact details</h2>
+        <dl class="mt-4 divide-y divide-border border-y border-border">
+          {details.map((x) => (
+            <div class="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
+              <dt class="text-step--1 text-fg-muted">{x.label}</dt>
+              <dd class="min-w-0 break-words text-fg-strong">{x.href ? <a href={x.href}>{x.value}</a> : <Text value={x.value} />}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section aria-labelledby="profiles-title" class="mt-12">
+        <h2 id="profiles-title" class="label label-accent font-sans">Academic profiles</h2>
+        {hasLinks ? (
+          <SocialLinks class="mt-4" />
+        ) : (
+          <EditorNote class="mt-4">
+            ORCID, Google Scholar, ResearchGate, LinkedIn and GitHub links appear here, in the footer and in structured
+            data once you add their URLs under <code>links</code> in <code>src/content/profile/profile.md</code>.
+          </EditorNote>
+        )}
+      </section>
+
+      <section aria-labelledby="prefs-title" class="mt-12">
+        <h2 id="prefs-title" class="label label-accent font-sans">Before you write</h2>
+        <Markdown entry={preferences} class="prose mt-4" />
+      </section>
+    </div>
+
+    <section class="min-w-0 lg:col-span-7" aria-labelledby="form-title" id="contact-form">
+      <div class="rounded-md border border-border bg-surface-2 p-5 sm:p-8">
+        <h2 id="form-title" class="text-step-3">Send a message</h2>
+        <p class="mt-2 mb-8 text-fg-muted">For enquiries about research collaboration, graduate research, scientific software and related academic opportunities.</p>
+        <ContactForm />
+      </div>
+    </section>
+  </div>
+</PageLayout>

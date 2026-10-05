@@ -1,0 +1,118 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Markdown from '../../components/Markdown.astro';
+import Text from '../../components/Text.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import ProvisionalBadge from '../../components/ProvisionalBadge.astro';
+import { getSnippet, getTeaching } from '../../utils/content';
+
+const philosophy = await getSnippet('teaching-philosophy');
+const subjects = await getTeaching();
+---
+
+<PageLayout
+  title="Teaching"
+  eyebrow="Teaching"
+  description="Teaching philosophy, subject areas, courses and learning resources."
+  lede="Courses, educational resources and scientific instruction."
+  breadcrumbs={[{ name: 'Teaching', href: '/teaching/' }]}
+>
+  <section class="section" aria-labelledby="philosophy-heading">
+    <div class="wrap grid gap-6 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-3">
+        <div class="section-rule" aria-hidden="true"></div>
+        <h2 id="philosophy-heading" class="mt-5 text-step-2">Teaching philosophy</h2>
+      </div>
+      <div class="min-w-0 lg:col-span-8">
+        <Markdown entry={philosophy} class="prose text-step-1" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="subjects-heading">
+    <div class="wrap">
+      <div class="section-rule" aria-hidden="true"></div>
+      <div class="mt-5 mb-8 flex flex-wrap items-end justify-between gap-4">
+        <h2 id="subjects-heading" class="text-step-3">Subject areas</h2>
+        <p class="text-step--1 text-fg-muted tabular">{subjects.length} subjects</p>
+      </div>
+
+      <ul class="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+        {
+          subjects.map((s) => (
+            <li class="subject relative flex flex-col border-t-2 border-fg-strong pt-5">
+              <div class="flex items-center justify-between gap-3">
+                <p class="label">{s.data.levels.length ? s.data.levels.join(' · ') : 'Subject'}</p>
+                {!s.data.confirmed && <ProvisionalBadge text="Topics provisional" />}
+              </div>
+              <h3 class="mt-4 text-step-2">
+                <a href={`/teaching/${s.id}/`} class="subject-link">
+                  {s.data.title}
+                </a>
+              </h3>
+              <Text value={s.data.summary} as="p" class="mt-2 text-fg" />
+              {s.data.topics.length > 0 && (
+                <ul class="mt-5 space-y-1 text-step--1 text-fg-muted" aria-label={`${s.data.title} topics`}>
+                  {s.data.topics.slice(0, 5).map((t) => (
+                    <li class="topic">{t}</li>
+                  ))}
+                  {s.data.topics.length > 5 && <li class="topic">and {s.data.topics.length - 5} more</li>}
+                </ul>
+              )}
+              {(s.data.courses.length > 0 || s.data.resources.length > 0) && (
+                <p class="mt-auto pt-6 text-step--1 text-fg-muted tabular">
+                  {[
+                    s.data.courses.length && `${s.data.courses.length} course${s.data.courses.length === 1 ? '' : 's'}`,
+                    s.data.resources.length && `${s.data.resources.length} resource${s.data.resources.length === 1 ? '' : 's'}`,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+      <EditorNote class="mt-6">
+        Each subject is a Markdown file in <code>src/content/teaching/</code>. Topics are illustrative until you set{' '}
+        <code>confirmed: true</code>. Add courses, notes, slides, assignments and reading lists using the fields shown in{' '}
+        <code>_TEMPLATE.md</code>.
+      </EditorNote>
+    </div>
+  </section>
+</PageLayout>
+
+<style>
+  .subject-link {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .subject-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .subject:hover .subject-link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+
+  .subject-link:focus-visible {
+    outline: none;
+  }
+
+  .subject:has(.subject-link:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 6px;
+  }
+
+  .topic::before {
+    content: '';
+    display: inline-block;
+    width: 0.75rem;
+    height: 1px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    background: var(--border-strong);
+  }
+</style>

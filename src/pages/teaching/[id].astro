@@ -1,0 +1,149 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../../layouts/PageLayout.astro';
+import Markdown from '../../components/Markdown.astro';
+import ListSection from '../../components/ListSection.astro';
+import ProvisionalNotice from '../../components/ProvisionalNotice.astro';
+import EditorNote from '../../components/EditorNote.astro';
+import Text from '../../components/Text.astro';
+import { getResearch, type Teaching } from '../../utils/content';
+import { isReal } from '../../utils/placeholders';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('teaching');
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: Teaching;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+
+const GROUPS = [
+  ['lecture-notes', 'Lecture notes'],
+  ['slides', 'Lecture slides'],
+  ['assignment', 'Assignments'],
+  ['tutorial', 'Tutorials'],
+  ['reading', 'Readings'],
+  ['link', 'Useful links'],
+  ['external', 'External resources'],
+  ['download', 'Downloadable materials'],
+] as const;
+const groups = GROUPS.map(([type, label]) => ({ label, items: d.resources.filter((r) => r.type === type) })).filter(
+  (g) => g.items.length,
+);
+
+const relatedResearch = (await getResearch()).filter((r) => r.data.relatedTeaching.some((t) => t.id === entry.id));
+const isExternal = (url: string) => /^https?:\/\//.test(url);
+const hasMaterials = d.courses.length || d.resources.length || d.readingList.length;
+---
+
+<PageLayout
+  title={d.title}
+  eyebrow="Teaching subject"
+  description={isReal(d.summary) ? d.summary : `${d.title}: subject overview, topics and learning resources.`}
+  lede={d.summary}
+  breadcrumbs={[
+    { name: 'Teaching', href: '/teaching/' },
+    { name: d.title, href: `/teaching/${entry.id}/` },
+  ]}
+>
+  <div class="wrap section">
+    {!d.confirmed && <ProvisionalNotice kind="subject" />}
+
+    <ListSection title="Overview" id="overview" show={Boolean(entry.rendered?.html?.trim())}>
+      <Markdown entry={entry} />
+    </ListSection>
+
+    <ListSection title="Academic level" id="level" show={d.levels.length > 0}>
+      <ul class="flex flex-wrap gap-2">{d.levels.map((l) => <li class="badge">{l}</li>)}</ul>
+    </ListSection>
+
+    <ListSection title="Learning objectives" id="objectives" show={d.objectives.length > 0}>
+      <p class="mb-3 text-fg-muted">By the end of this subject, students should be able to:</p>
+      <ol class="prose list-decimal">{d.objectives.map((o) => <li><Text value={o} /></li>)}</ol>
+    </ListSection>
+
+    <ListSection title={d.confirmed ? 'Topics' : 'Topics (provisional)'} id="topics" show={d.topics.length > 0}>
+      <ul class="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+        {d.topics.map((t) => <li class="topic-item"><Text value={t} /></li>)}
+      </ul>
+    </ListSection>
+
+    <ListSection title="Courses" id="courses" show={d.courses.length > 0}>
+      <ul class="divide-y divide-border border-y border-border">
+        {
+          d.courses.map((c) => (
+            <li class="py-4">
+              <h3 class="text-step-1">{c.url ? <a href={c.url}>{c.title}</a> : c.title}</h3>
+              <p class="mt-1 text-step--1 text-fg-muted">{[c.level, c.term].filter(Boolean).join(' · ')}</p>
+              {c.description && <p class="mt-2">{c.description}</p>}
+            </li>
+          ))
+        }
+      </ul>
+    </ListSection>
+
+    {
+      groups.map((g) => (
+        <ListSection title={g.label} show>
+          <ul class="divide-y divide-border border-y border-border">
+            {g.items.map((r) => (
+              <li class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3">
+                <a href={r.url} class="font-semibold" {...(isExternal(r.url) ? { rel: 'noopener' } : {})}>
+                  {r.title}
+                </a>
+                <span class="text-step--1 text-fg-muted">{[r.format, r.date].filter(Boolean).join(' · ')}</span>
+                {r.description && <p class="w-full text-step--1 text-fg">{r.description}</p>}
+              </li>
+            ))}
+          </ul>
+        </ListSection>
+      ))
+    }
+
+    <ListSection title="Reading list" id="reading" show={d.readingList.length > 0}>
+      <ol class="prose list-decimal">
+        {d.readingList.map((r) => <li>{r.url ? <a href={r.url}>{r.citation}</a> : r.citation}</li>)}
+      </ol>
+    </ListSection>
+
+    <ListSection title="Related research" id="related" show={relatedResearch.length > 0}>
+      <ul class="flex flex-wrap gap-x-6 gap-y-2">
+        {relatedResearch.map((r) => <li><a class="arrow-link" href={`/research/${r.id}/`}>{r.data.title} <span class="arrow" aria-hidden="true">&rarr;</span></a></li>)}
+      </ul>
+    </ListSection>
+
+    {
+      !hasMaterials && (
+        <EditorNote class="mt-8">
+          No courses or materials yet. Add <code>courses</code>, <code>resources</code> (notes, slides, assignments,
+          tutorials, links, downloads) and <code>readingList</code> to <code>src/content/teaching/{entry.id}.md</code>.
+          Files go in <code>public/documents/teaching/</code>. Empty sections stay hidden.
+        </EditorNote>
+      )
+    }
+
+    <p class="mt-12 border-t border-border pt-6">
+      <a class="arrow-link" href="/teaching/"><span aria-hidden="true">&larr;</span> All teaching subjects</a>
+    </p>
+  </div>
+</PageLayout>
+
+<style>
+  .topic-item {
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .topic-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.75em;
+    width: 0.45rem;
+    height: 1px;
+    background: var(--accent);
+  }
+</style>

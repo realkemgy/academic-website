@@ -1,0 +1,147 @@
+---
+/**
+ * Homepage hero: name, title, positioning statement, primary pathways and the
+ * portrait, followed by a metadata strip set like the header of a paper.
+ */
+import { getProfile, displayName } from '../utils/content';
+import { isReal } from '../utils/placeholders';
+import Text from './Text.astro';
+import Portrait from './Portrait.astro';
+
+const profile = await getProfile();
+const d = profile.data;
+
+// Hexagonal lattice drawn once as line art behind the portrait (decorative).
+const R = 22;
+const hexes: string[] = [];
+for (let row = 0; row < 9; row++) {
+  for (let col = 0; col < 7; col++) {
+    const cx = col * R * Math.sqrt(3) + (row % 2 ? (R * Math.sqrt(3)) / 2 : 0);
+    const cy = row * R * 1.5;
+    const pts = Array.from({ length: 6 }, (_, k) => {
+      const a = (Math.PI / 3) * k + Math.PI / 6;
+      return `${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`;
+    });
+    hexes.push(pts.join(' '));
+  }
+}
+
+const meta = [
+  { label: 'Position', value: d.title },
+  { label: 'Institution', value: d.institution },
+  { label: 'Department', value: d.department },
+  { label: 'Contact', value: d.email, href: isReal(d.email) ? `mailto:${d.email}` : undefined },
+].filter((m) => m.value);
+---
+
+<section class="hero relative overflow-hidden border-b border-border" aria-labelledby="hero-name">
+  <div class="wrap grid items-center gap-10 pt-10 pb-12 md:pt-16 md:pb-16 lg:grid-cols-12 lg:gap-12">
+    <div class="min-w-0 lg:col-span-7">
+      {
+        (d.department || d.institution) && (
+          <p class="label mb-5">
+            <Text value={d.department} />
+            {d.department && d.institution && <span aria-hidden="true"> &middot; </span>}
+            <Text value={d.institution} />
+          </p>
+        )
+      }
+      <h1 id="hero-name" class="hero-name">
+        <Text value={displayName(profile)} />
+      </h1>
+      {
+        d.roles.length > 0 ? (
+          <p class="roles mt-4">
+            {d.roles.map((role, i) => (
+              <>
+                {i > 0 && (
+                  <span class="sep" aria-hidden="true">
+                    |
+                  </span>
+                )}
+                <Text value={role} />
+              </>
+            ))}
+          </p>
+        ) : (
+          <Text value={d.title} as="p" class="roles mt-4" />
+        )
+      }
+      {d.positioning && <Text value={d.positioning} as="p" class="lede mt-6 max-w-[38rem]" />}
+
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a class="btn btn-primary" href="/research/">Explore My Research</a>
+        <a class="btn btn-secondary" href="/teaching/">View Teaching</a>
+        <a class="arrow-link ml-1 py-2" href="/publications/">
+          View Publications <span class="arrow" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="relative mx-auto w-full max-w-[19rem] sm:max-w-[21rem] lg:col-span-4 lg:col-start-9 lg:max-w-none">
+      <svg class="lattice" viewBox="-30 -30 300 340" aria-hidden="true" focusable="false">
+        {hexes.map((p) => <polygon points={p} />)}
+      </svg>
+      <Portrait class="relative" />
+    </div>
+  </div>
+
+  {
+    meta.length > 0 && (
+      <div class="border-t border-border bg-surface-2/60">
+        <dl class="wrap grid grid-cols-1 gap-x-8 gap-y-4 py-5 sm:grid-cols-2 lg:grid-cols-4">
+          {meta.map((m) => (
+            <div class="min-w-0">
+              <dt class="label">{m.label}</dt>
+              <dd class="mt-1 truncate text-fg-strong">
+                {m.href ? <a href={m.href}>{m.value}</a> : <Text value={m.value} />}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )
+  }
+</section>
+
+<style>
+  .hero-name {
+    font-size: var(--step-5);
+    line-height: 1.02;
+    font-weight: 450;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'opsz' 60;
+  }
+
+  .roles {
+    font-size: var(--step-1);
+    color: var(--fg);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.6rem;
+  }
+
+  .sep {
+    color: var(--border-strong);
+  }
+
+  .lattice {
+    position: absolute;
+    inset: -2.5rem -3rem auto auto;
+    width: 115%;
+    height: auto;
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 0.7;
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
+    mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  }
+
+  @media (max-width: 63.99rem) {
+    .lattice {
+      inset: -1.5rem -2rem auto auto;
+    }
+  }
+</style>

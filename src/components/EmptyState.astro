@@ -1,0 +1,15 @@
+---
+/** Professional empty state, used instead of fake examples. */
+interface Props {
+  title: string;
+  class?: string;
+}
+const { title, class: className = '' } = Astro.props;
+---
+
+<div class:list={['rounded-md border border-dashed border-border-strong bg-surface-2 px-6 py-8 md:px-8', className]}>
+  <p class="font-serif text-step-1 text-fg-strong">{title}</p>
+  <div class="mt-2 max-w-measure text-fg-muted">
+    <slot />
+  </div>
+</div>

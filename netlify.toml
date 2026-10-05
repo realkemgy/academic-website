@@ -1,0 +1,18 @@
+# Netlify configuration. Security headers come from public/_headers.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+
+# Deploy previews and branch deploys must never be indexed.
+[context.deploy-preview.environment]
+  PUBLIC_ALLOW_INDEXING = "false"
+
+[context.branch-deploy.environment]
+  PUBLIC_ALLOW_INDEXING = "false"

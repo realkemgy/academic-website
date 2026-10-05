@@ -1,0 +1,206 @@
+---
+/**
+ * Contact form. Posts to PUBLIC_CONTACT_ENDPOINT (default /api/contact),
+ * which is served by whichever adapter the host uses (see server/ and
+ * docs/CONTACT-FORM.md). Works without JavaScript as a normal form POST; with
+ * JavaScript it validates inline and submits in the background.
+ *
+ * No secrets live here: the only key that can appear is the public Turnstile
+ * site key.
+ */
+import { SITE } from '../config/site';
+import { getProfile } from '../utils/content';
+import { isReal } from '../utils/placeholders';
+
+const { formEnabled, endpoint, turnstileSiteKey } = SITE.contact;
+const email = (await getProfile()).data.email;
+
+import { LIMITS } from '../../server/contact/validation.js';
+---
+
+<form
+  class="contact-form grid gap-6"
+  method="post"
+  action={endpoint}
+  novalidate
+  data-contact-form
+  data-enabled={formEnabled ? 'true' : 'false'}
+  aria-describedby="form-status"
+>
+  {
+    !formEnabled && (
+      <p class="editor-note" role="note">
+        <strong>The contact form is not active yet.</strong> Messages cannot be sent until a form backend is configured
+        {isReal(email) ? <>; please email <a href={`mailto:${email}`}>{email}</a> instead.</> : '.'}
+      </p>
+    )
+  }
+
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div>
+      <label for="cf-name" class="field-label">Name <span class="req" aria-hidden="true">*</span></label>
+      <input id="cf-name" name="name" type="text" class="control" required maxlength={LIMITS.name} autocomplete="name" aria-describedby="cf-name-error" />
+      <span id="cf-name-error" class="field-error" data-error-for="name" hidden></span>
+    </div>
+    <div>
+      <label for="cf-email" class="field-label">Email <span class="req" aria-hidden="true">*</span></label>
+      <input id="cf-email" name="email" type="email" class="control" required maxlength={LIMITS.email} autocomplete="email" inputmode="email" aria-describedby="cf-email-error" />
+      <span id="cf-email-error" class="field-error" data-error-for="email" hidden></span>
+    </div>
+  </div>
+
+  <div>
+    <label for="cf-org" class="field-label">Institution / Organisation <span class="font-normal text-fg-muted">(optional)</span></label>
+    <input id="cf-org" name="organisation" type="text" class="control" maxlength={LIMITS.organisation} autocomplete="organization" aria-describedby="cf-org-error" />
+    <span id="cf-org-error" class="field-error" data-error-for="organisation" hidden></span>
+  </div>
+
+  <div>
+    <label for="cf-subject" class="field-label">Subject <span class="req" aria-hidden="true">*</span></label>
+    <input id="cf-subject" name="subject" type="text" class="control" required maxlength={LIMITS.subject} aria-describedby="cf-subject-error" />
+    <span id="cf-subject-error" class="field-error" data-error-for="subject" hidden></span>
+  </div>
+
+  <div>
+    <label for="cf-message" class="field-label">Message <span class="req" aria-hidden="true">*</span></label>
+    <textarea id="cf-message" name="message" class="control" required minlength={LIMITS.messageMin} maxlength={LIMITS.message} rows="7" aria-describedby="cf-message-hint cf-message-error"></textarea>
+    <span id="cf-message-hint" class="field-hint">Between {LIMITS.messageMin} and {LIMITS.message.toLocaleString('en-GB')} characters.</span>
+    <span id="cf-message-error" class="field-error" data-error-for="message" hidden></span>
+  </div>
+
+  <!-- Honeypot: hidden from people and assistive technology; bots tend to fill it. -->
+  <div class="hp" aria-hidden="true">
+    <label for="cf-website">Leave this field empty</label>
+    <input id="cf-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+  <input type="hidden" name="started" value="" data-started />
+
+  {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="auto"></div>}
+
+  <p class="text-step--1 text-fg-muted">
+    Fields marked <span aria-hidden="true">*</span><span class="sr-only">with an asterisk</span> are required. Your
+    details are used only to reply to your message. See the <a href="/privacy/">privacy notice</a>.
+  </p>
+
+  <div class="flex flex-wrap items-center gap-4">
+    <button type="submit" class="btn btn-primary" data-submit>Send message</button>
+    <p id="form-status" class="form-status" role="status" aria-live="polite" data-status></p>
+  </div>
+</form>
+
+{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+
+<script>
+  import { validateContact } from '../../server/contact/validation.js';
+  type ContactFields = { name: string; email: string; organisation: string; subject: string; message: string };
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  if (form) {
+    const enabled = form.dataset.enabled === 'true';
+    const status = form.querySelector<HTMLElement>('[data-status]')!;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
+    form.querySelector<HTMLInputElement>('[data-started]')!.value = String(Date.now());
+
+    const setStatus = (text: string, tone: 'ok' | 'error' | 'info') => {
+      status.textContent = text;
+      status.dataset.tone = tone;
+    };
+
+    const showErrors = (errors: Partial<Record<keyof ContactFields, string>>) => {
+      for (const el of form.querySelectorAll<HTMLElement>('[data-error-for]')) {
+        const key = el.dataset.errorFor as keyof ContactFields;
+        const field = form.elements.namedItem(key) as HTMLInputElement | null;
+        const msg = errors[key];
+        el.hidden = !msg;
+        el.textContent = msg ?? '';
+        field?.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      }
+      const first = Object.keys(errors)[0];
+      if (first) (form.elements.namedItem(first) as HTMLElement | null)?.focus();
+    };
+
+    // Re-validate an invalid field as the user types, so its error clears as soon
+    // as it is fixed (and not on blur, which would shift the layout mid-click).
+    form.addEventListener('input', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (!t.name || t.getAttribute('aria-invalid') !== 'true') return;
+      const { errors } = validateContact(Object.fromEntries(new FormData(form)) as Record<string, string>);
+      const el = form.querySelector<HTMLElement>(`[data-error-for="${t.name}"]`);
+      const msg = errors[t.name as keyof ContactFields];
+      if (el) { el.hidden = !msg; el.textContent = msg ?? ''; }
+      t.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const raw = Object.fromEntries(new FormData(form)) as Record<string, string>;
+      const { errors } = validateContact(raw);
+      showErrors(errors);
+      if (Object.keys(errors).length) {
+        setStatus('Please correct the highlighted fields.', 'error');
+        return;
+      }
+      if (!enabled) {
+        setStatus('The form is valid, but sending is not switched on yet. Please use email for now.', 'info');
+        return;
+      }
+      submit.disabled = true;
+      setStatus('Sending…', 'info');
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(raw),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.ok) {
+          form.reset();
+          form.querySelector<HTMLInputElement>('[data-started]')!.value = String(Date.now());
+          setStatus('Thank you. Your message has been sent.', 'ok');
+          (window as any).turnstile?.reset?.();
+        } else if (res.status === 422 && body.errors) {
+          showErrors(body.errors);
+          setStatus('Please correct the highlighted fields.', 'error');
+        } else if (res.status === 429) {
+          setStatus('Too many messages in a short time. Please wait a few minutes and try again.', 'error');
+        } else {
+          setStatus(body.message || 'The message could not be sent. Please try again later or use email.', 'error');
+        }
+      } catch {
+        setStatus('The message could not be sent because of a network problem. Please try again or use email.', 'error');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  .req {
+    color: var(--danger);
+  }
+
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .form-status {
+    font-weight: 600;
+  }
+
+  .form-status[data-tone='ok'] {
+    color: var(--success);
+  }
+
+  .form-status[data-tone='error'] {
+    color: var(--danger);
+  }
+
+  .form-status[data-tone='info'] {
+    color: var(--fg-muted);
+  }
+</style>

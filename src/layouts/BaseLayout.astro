@@ -1,0 +1,89 @@
+---
+/**
+ * Root document. Every page uses this layout (directly or through PageLayout).
+ */
+import '../styles/global.css';
+import SEO from '../components/SEO.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Analytics from '../components/Analytics.astro';
+import { SITE } from '../config/site';
+import { getProfile, displayName, profileLinks } from '../utils/content';
+import { isReal, plain } from '../utils/placeholders';
+import { personJsonLd, websiteJsonLd } from '../utils/seo';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+  jsonLd?: (Record<string, unknown> | null)[];
+  scholar?: { name: string; content: string }[];
+}
+
+const profile = await getProfile();
+const siteName = plain(displayName(profile));
+const { title, description, image, type, noindex, jsonLd = [], scholar } = Astro.props;
+
+const fullTitle = title ? `${plain(title)} | ${siteName}` : `${siteName}: ${plain(profile.data.title)}`;
+const defaultDescription = isReal(profile.data.positioning)
+  ? profile.data.positioning
+  : `Teaching, research, publications and scientific software of ${siteName}.`;
+
+const isHome = Astro.url.pathname === '/';
+const sameAs = profileLinks(profile).map((l) => l.url).filter((u) => u.startsWith('http'));
+const siteLd = isHome ? [websiteJsonLd(siteName), personJsonLd(profile, sameAs)] : [];
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <SEO
+      title={fullTitle}
+      description={plain(description ?? defaultDescription)}
+      path={Astro.url.pathname}
+      siteName={siteName}
+      image={image}
+      type={type}
+      noindex={noindex}
+      jsonLd={[...siteLd, ...jsonLd]}
+      scholar={scholar}
+    />
+    <slot name="head" />
+    <Analytics />
+  </head>
+  <body class="flex min-h-dvh flex-col">
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <Header />
+    <main id="main" tabindex="-1" class="flex-1 outline-none">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style is:global>
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -10rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--brand);
+    color: var(--brand-fg);
+    font-weight: 600;
+    border-radius: var(--radius-1);
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    top: 0.75rem;
+  }
+</style>

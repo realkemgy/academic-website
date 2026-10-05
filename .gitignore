@@ -1,0 +1,22 @@
+# build output
+dist/
+.astro/
+.azure-api/
+
+# dependencies
+node_modules/
+
+# environment (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# platform local state
+.wrangler/
+.vercel/
+.netlify/
+
+# logs and OS files
+npm-debug.log*
+.DS_Store
+Thumbs.db

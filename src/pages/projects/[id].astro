@@ -1,0 +1,68 @@
+---
+import { getCollection, getEntries, getEntry } from 'astro:content';
+import PageLayout from '../../layouts/PageLayout.astro';
+import Markdown from '../../components/Markdown.astro';
+import ListSection from '../../components/ListSection.astro';
+import type { Project } from '../../utils/content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('projects', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: Project;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const themes = await getEntries(d.research);
+const pubRef = typeof d.publication === 'object' ? await getEntry(d.publication) : undefined;
+const pubUrl = typeof d.publication === 'string' && d.publication ? d.publication : undefined;
+
+const STATUS: Record<string, string> = {
+  planned: 'Planned', 'in-development': 'In development', active: 'Active',
+  maintained: 'Maintained', completed: 'Completed', archived: 'Archived',
+};
+const links = [
+  ['Repository', d.repo], ['Documentation', d.docs], ['Demo', d.demo], ['Website', d.website],
+].filter(([, u]) => u) as [string, string][];
+---
+
+<PageLayout
+  title={d.title}
+  eyebrow="Software & project"
+  description={d.summary}
+  lede={d.summary}
+  breadcrumbs={[{ name: 'Software & Projects', href: '/projects/' }, { name: d.title, href: `/projects/${entry.id}/` }]}
+>
+  <div class="wrap section grid gap-12 lg:grid-cols-12">
+    <div class="min-w-0 lg:col-span-8">
+      <ListSection title="Description" show={Boolean(entry.rendered?.html?.trim())}><Markdown entry={entry} /></ListSection>
+      <ListSection title="Scientific problem" show={Boolean(d.problem)}><p class="max-w-measure">{d.problem}</p></ListSection>
+      <ListSection title="Research context" show={Boolean(d.context)}><p class="max-w-measure">{d.context}</p></ListSection>
+      <ListSection title="Research significance" show={Boolean(d.significance)}><p class="max-w-measure">{d.significance}</p></ListSection>
+      <ListSection title="Methods" show={d.methods.length > 0}><ul class="flex flex-wrap gap-2">{d.methods.map((m) => <li class="tag">{m}</li>)}</ul></ListSection>
+    </div>
+    <aside class="lg:col-span-4" aria-label="Project details">
+      <dl class="divide-y divide-border border-y border-border text-step--1">
+        <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5"><dt class="text-fg-muted">Status</dt><dd class="text-fg-strong">{STATUS[d.status]}</dd></div>
+        {d.languages.length > 0 && <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5"><dt class="text-fg-muted">Languages</dt><dd class="font-mono text-fg-strong">{d.languages.join(', ')}</dd></div>}
+        {d.technologies.length > 0 && <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5"><dt class="text-fg-muted">Technologies</dt><dd class="font-mono text-fg-strong">{d.technologies.join(', ')}</dd></div>}
+        {d.license && <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5"><dt class="text-fg-muted">Licence</dt><dd class="text-fg-strong">{d.license}</dd></div>}
+      </dl>
+      {links.length > 0 && <ul class="mt-6 space-y-2">{links.map(([label, url]) => <li><a class="arrow-link" href={url} rel="noopener">{label} <span class="arrow" aria-hidden="true">&rarr;</span></a></li>)}</ul>}
+      {(pubRef || pubUrl) && (
+        <div class="mt-8">
+          <p class="label mb-2">Publication</p>
+          {pubRef ? <a href={`/publications/${pubRef.id}/`}>{pubRef.data.title}</a> : <a href={pubUrl} rel="noopener">{pubUrl}</a>}
+        </div>
+      )}
+      {themes.length > 0 && (
+        <div class="mt-8">
+          <p class="label mb-2">Research themes</p>
+          <ul class="space-y-1">{themes.map((t) => <li><a href={`/research/${t.id}/`}>{t.data.title}</a></li>)}</ul>
+        </div>
+      )}
+    </aside>
+  </div>
+</PageLayout>

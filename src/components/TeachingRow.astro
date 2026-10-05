@@ -1,0 +1,87 @@
+---
+/**
+ * One teaching subject as a row in an index (subject | topics | link).
+ */
+import type { Teaching } from '../utils/content';
+import Text from './Text.astro';
+import ProvisionalBadge from './ProvisionalBadge.astro';
+
+interface Props {
+  entry: Teaching;
+  topicLimit?: number;
+}
+const { entry, topicLimit = 6 } = Astro.props;
+const d = entry.data;
+const topics = d.topics.slice(0, topicLimit);
+---
+
+<li class="teaching-row relative grid gap-3 border-b border-border py-6 md:grid-cols-12 md:gap-8">
+  <div class="md:col-span-4">
+    <h3 class="text-step-2">
+      <a href={`/teaching/${entry.id}/`} class="row-link">{d.title}</a>
+    </h3>
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      {d.levels.map((l) => <span class="badge">{l}</span>)}
+      {!d.confirmed && <ProvisionalBadge text="Topics provisional" />}
+    </div>
+  </div>
+  <div class="min-w-0 md:col-span-7">
+    <Text value={d.summary} as="p" class="text-fg" />
+    {
+      topics.length > 0 && (
+        <p class="mt-2 text-step--1 text-fg-muted">
+          {topics.join(' · ')}
+          {d.topics.length > topics.length && ' · …'}
+        </p>
+      )
+    }
+  </div>
+  <div class="hidden items-start justify-end md:col-span-1 md:flex" aria-hidden="true">
+    <span class="row-arrow">&rarr;</span>
+  </div>
+</li>
+
+<style>
+  .row-link {
+    color: var(--fg-strong);
+    text-decoration: none;
+  }
+
+  .row-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .teaching-row {
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .teaching-row:hover {
+    background: var(--surface-2);
+  }
+
+  .teaching-row:hover .row-link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+
+  .row-arrow {
+    font-size: 1.25rem;
+    color: var(--accent);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .teaching-row:hover .row-arrow {
+    transform: translateX(4px);
+  }
+
+  .row-link:focus-visible {
+    outline: none;
+  }
+
+  .teaching-row:has(.row-link:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+</style>
