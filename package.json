@@ -28,6 +28,6 @@
     "@astrojs/check": "^0.9.10",
     "@azure/functions": "^4.16.5",
     "esbuild": "^0.28.2",
-    "typescript": "^6.0.0"
+    "typescript": "^7.0.2"
   }
 }
