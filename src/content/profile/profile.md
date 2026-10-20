@@ -8,7 +8,7 @@
 # Leave a link empty ("") to hide it everywhere.
 # ============================================================================
 
-name: "[FULL NAME]"                    # Full professional name
+name: "Kemi Whenu"                    # Full professional name
 preferredName: ""                      # Optional shorter academic name shown in the header
 postNominals: "PhD"
 title: "[ACADEMIC TITLE]"              # e.g. the exact job title at the institution
