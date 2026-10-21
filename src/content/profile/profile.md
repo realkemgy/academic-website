@@ -8,7 +8,7 @@
 # Leave a link empty ("") to hide it everywhere.
 # ============================================================================
 
-name: "Kemi Whenu"                    # Full professional name
+name: "Oluwakemi Whenu"                    # Full professional name
 preferredName: ""                      # Optional shorter academic name shown in the header
 postNominals: "PhD"
 title: "[ACADEMIC TITLE]"              # e.g. the exact job title at the institution
@@ -22,7 +22,7 @@ roles:
 # One-sentence positioning statement (example wording only: confirm or replace).
 positioning: "[Exploring molecular systems through physical chemistry, computational methods, spectroscopy and scientific software.]"
 
-institution: "[UNIVERSITY]"
+institution: "University of Lagos"
 department: "[DEPARTMENT]"
 office: "[OFFICE LOCATION]"
 email: "[EMAIL ADDRESS]"
